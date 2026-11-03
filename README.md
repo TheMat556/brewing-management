@@ -35,6 +35,8 @@ conventions, access policy, RPC boundaries, and constraints.
 | `@supabase/supabase-js` | 2.118.0 |
 | Supabase CLI            | 3.0.0   |
 | Zod                     | 4.6.7   |
+| Zustand                 | 5.0.16  |
+| shadcn CLI (dev)        | 4.23.0  |
 | Vitest                  | 5.1.0   |
 | `pg` (dev)              | 8.23.1  |
 | Biome                   | 2.6.4   |

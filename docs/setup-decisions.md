@@ -67,41 +67,41 @@ install command.
 Reference manifest: `TheMat556/grove` at review time. Versions below are the ranges found
 there; resolved versions are from this project's lockfile.
 
-| Package                     | Grove version | Already in starter? | Decision             | Reason                                                                       |
-| --------------------------- | ------------- | ------------------- | -------------------- | ---------------------------------------------------------------------------- |
-| `next`                      | `latest`      | Yes                 | Keep                 | Resolved Next 16.4.4; no blind copy of Grove versions                        |
-| `react` / `react-dom`       | `^19.0.0`     | Yes                 | Keep                 | Resolved 19.3.1                                                              |
-| `@supabase/ssr`             | `latest`      | Yes                 | Keep                 | Starter authentication and cookie handling                                   |
-| `@supabase/supabase-js`     | `latest`      | Yes                 | Keep                 | Starter Supabase client                                                      |
-| `tailwindcss`               | `^4.1.0`      | Yes, 3.4.19         | Keep starter version | Avoid an unrequested Tailwind 4 migration                                    |
-| `tailwind-merge`            | `^3.3.0`      | Yes                 | Keep                 | Used by starter UI helper                                                    |
-| `clsx`                      | `^2.1.1`      | Yes                 | Keep                 | Used by starter UI helper                                                    |
-| `class-variance-authority`  | `^0.7.1`      | Yes                 | Keep                 | Starter component variants                                                   |
-| `lucide-react`              | `^0.511.0`    | Yes                 | Keep                 | Starter icons                                                                |
-| `next-themes`               | `^0.4.6`      | Yes                 | Keep                 | Starter theme switching                                                      |
-| Radix packages              | Multiple      | Yes                 | Keep                 | Starter UI primitives                                                        |
-| `zod`                       | `^4.4.3`      | No                  | **Add**              | Present in Grove and useful for server-side validation; resolved 4.6.7       |
-| `vitest`                    | `^4.1.10`     | No                  | **Add**              | Test runner; resolved 5.1.0                                                  |
-| `pg`                        | Not present   | No                  | **Add**              | Direct local PostgreSQL acceptance/concurrency tests; resolved 8.23.1        |
-| `@types/pg`                 | Not present   | No                  | **Add**              | TypeScript types for `pg`; resolved 8.23.1                                   |
-| `@biomejs/biome`            | `^2.5.3`      | No                  | **Add**              | Explicit replacement for ESLint; config written from scratch, resolved 2.6.4 |
-| `supabase`                  | Not present   | No                  | **Add**              | Required by setup contract for pinned CLI migrations; resolved 3.0.0         |
-| `@testing-library/react`    | `^16.3.2`     | No                  | Skip for now         | No component tests in setup scope                                            |
-| `@testing-library/jest-dom` | `^6.9.1`      | No                  | Skip for now         | No component tests in setup scope                                            |
-| `jsdom`                     | `^29.1.1`     | No                  | Skip for now         | Node-environment tests only                                                  |
-| `@vitejs/plugin-react`      | `^6.0.3`      | No                  | Skip for now         | No component tests in setup scope                                            |
-| `@vitest/coverage-v8`       | `^4.1.10`     | No                  | Skip for now         | Coverage threshold not yet defined                                           |
-| `cypress`                   | `^15.18.1`    | No                  | Skip                 | E2E scope not part of setup                                                  |
-| `@sentry/nextjs`            | `10`          | No                  | Skip                 | Monitoring is optional; would require deliberate configuration               |
-| `zustand`                   | `^5.0.14`     | No                  | Skip                 | No client-state requirement yet                                              |
-| `@base-ui/react`            | `^1.6.0`      | No                  | Skip                 | Duplicates Radix primitives already in the starter                           |
-| `shadcn` (runtime package)  | `^4.13.0`     | No                  | Skip                 | Use `npx shadcn` on demand; not a runtime dependency                         |
-| `tw-animate-css`            | `^1.4.0`      | No                  | Skip                 | Starter already uses `tailwindcss-animate`                                   |
-| `server-only`               | `^0.0.1`      | No                  | Skip                 | Not needed by the retained starter code                                      |
-| `husky`                     | `^9.1.7`      | No                  | Skip                 | Commit tooling is optional                                                   |
-| `lint-staged`               | `^17.0.8`     | No                  | Skip                 | Commit tooling is optional                                                   |
-| `@tailwindcss/postcss`      | `^4.1.0`      | No                  | Skip                 | Tailwind 4 tooling is incompatible with the retained Tailwind 3 setup        |
-| Starter ESLint packages     | Not present   | Yes                 | **Remove**           | Replaced by Biome as an explicit project decision                            |
+| Package                     | Grove version | Already in starter? | Decision             | Reason                                                                        |
+| --------------------------- | ------------- | ------------------- | -------------------- | ----------------------------------------------------------------------------- |
+| `next`                      | `latest`      | Yes                 | Keep                 | Resolved Next 16.4.4; no blind copy of Grove versions                         |
+| `react` / `react-dom`       | `^19.0.0`     | Yes                 | Keep                 | Resolved 19.3.1                                                               |
+| `@supabase/ssr`             | `latest`      | Yes                 | Keep                 | Starter authentication and cookie handling                                    |
+| `@supabase/supabase-js`     | `latest`      | Yes                 | Keep                 | Starter Supabase client                                                       |
+| `tailwindcss`               | `^4.1.0`      | Yes, 3.4.19         | Keep starter version | Avoid an unrequested Tailwind 4 migration                                     |
+| `tailwind-merge`            | `^3.3.0`      | Yes                 | Keep                 | Used by starter UI helper                                                     |
+| `clsx`                      | `^2.1.1`      | Yes                 | Keep                 | Used by starter UI helper                                                     |
+| `class-variance-authority`  | `^0.7.1`      | Yes                 | Keep                 | Starter component variants                                                    |
+| `lucide-react`              | `^0.511.0`    | Yes                 | Keep                 | Starter icons                                                                 |
+| `next-themes`               | `^0.4.6`      | Yes                 | Keep                 | Starter theme switching                                                       |
+| Radix packages              | Multiple      | Yes                 | Keep                 | Starter UI primitives                                                         |
+| `zod`                       | `^4.4.3`      | No                  | **Add**              | Present in Grove and useful for server-side validation; resolved 4.6.7        |
+| `vitest`                    | `^4.1.10`     | No                  | **Add**              | Test runner; resolved 5.1.0                                                   |
+| `pg`                        | Not present   | No                  | **Add**              | Direct local PostgreSQL acceptance/concurrency tests; resolved 8.23.1         |
+| `@types/pg`                 | Not present   | No                  | **Add**              | TypeScript types for `pg`; resolved 8.23.1                                    |
+| `@biomejs/biome`            | `^2.5.3`      | No                  | **Add**              | Explicit replacement for ESLint; config written from scratch, resolved 2.6.4  |
+| `supabase`                  | Not present   | No                  | **Add**              | Required by setup contract for pinned CLI migrations; resolved 3.0.0          |
+| `@testing-library/react`    | `^16.3.2`     | No                  | Skip for now         | No component tests in setup scope                                             |
+| `@testing-library/jest-dom` | `^6.9.1`      | No                  | Skip for now         | No component tests in setup scope                                             |
+| `jsdom`                     | `^29.1.1`     | No                  | Skip for now         | Node-environment tests only                                                   |
+| `@vitejs/plugin-react`      | `^6.0.3`      | No                  | Skip for now         | No component tests in setup scope                                             |
+| `@vitest/coverage-v8`       | `^4.1.10`     | No                  | Skip for now         | Coverage threshold not yet defined                                            |
+| `cypress`                   | `^15.18.1`    | No                  | Skip                 | E2E scope not part of setup                                                   |
+| `@sentry/nextjs`            | `10`          | No                  | Skip                 | Monitoring is optional; would require deliberate configuration                |
+| `zustand`                   | `^5.0.14`     | No                  | **Add**              | Explicit project decision; resolved 5.0.16, installed for future client state |
+| `@base-ui/react`            | `^1.6.0`      | No                  | Skip                 | Duplicates Radix primitives already in the starter                            |
+| `shadcn` (CLI package)      | `^4.13.0`     | No                  | **Add (dev)**        | Explicit project decision; resolved 4.23.0, available via `bunx shadcn`       |
+| `tw-animate-css`            | `^1.4.0`      | No                  | Skip for now         | Tailwind 4-only; retained Tailwind 3 uses `tailwindcss-animate`               |
+| `server-only`               | `^0.0.1`      | No                  | Skip                 | Not needed by the retained starter code                                       |
+| `husky`                     | `^9.1.7`      | No                  | Skip                 | Commit tooling is optional                                                    |
+| `lint-staged`               | `^17.0.8`     | No                  | Skip                 | Commit tooling is optional                                                    |
+| `@tailwindcss/postcss`      | `^4.1.0`      | No                  | Skip                 | Tailwind 4 tooling is incompatible with the retained Tailwind 3 setup         |
+| Starter ESLint packages     | Not present   | Yes                 | **Remove**           | Replaced by Biome as an explicit project decision                             |
 
 No ORM or additional backend was introduced. Supabase/PostgREST plus SQL migrations remain
 the persistence stack.
