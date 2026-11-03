@@ -14,6 +14,9 @@ foundation.
 - Bun, Biome, Zod, and Vitest adopted as explicit project decisions.
 - No brewing tables, RLS domain policies, RPC functions, generated database types, or
   domain UI have been added. Those belong to the `TODO.md` implementation workstream.
+- The hosted Supabase project, production environment variables, and production Auth
+  verification are **deferred by the project owner** as of 2026-11-03. Local Supabase is the
+  current development target.
 
 See [`docs/setup-decisions.md`](docs/setup-decisions.md) for the dependency review,
 baseline results, and verification evidence.

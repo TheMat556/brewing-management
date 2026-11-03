@@ -47,6 +47,14 @@ pinned while Next 16.4.4 generated `.next/types` files that the stale config lin
 rejected. No application source logic was implicated. The planned Biome migration removed
 this toolchain mismatch rather than carrying the obsolete ESLint configuration forward.
 
+## Next.js configuration fix
+
+The starter enabled `cacheComponents` but not `partialPrefetching`, which caused a Next 16
+configuration warning. The bundled Next.js documentation states that new Cache Components
+projects should set both. `partialPrefetching: true` was added to `next.config.ts`; the
+warning is gone and build/dev still pass. This is a framework-version fix, not Grove-derived
+configuration.
+
 ## Package manager decision
 
 **Bun 1.3.14**, pinned via `packageManager`. Only `bun.lock` is committed; the generated
