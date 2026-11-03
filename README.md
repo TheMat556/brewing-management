@@ -1,110 +1,244 @@
-<a href="https://demo-nextjs-with-supabase.vercel.app/">
-  <img alt="Next.js and Supabase Starter Kit - the fastest way to build apps with Next.js and Supabase" src="https://demo-nextjs-with-supabase.vercel.app/opengraph-image.png">
-  <h1 align="center">Next.js and Supabase Starter Kit</h1>
-</a>
+# Brewing Management App
 
-<p align="center">
- The fastest way to build apps with Next.js and Supabase
-</p>
+A fresh Next.js + Supabase application scaffolded from the official
+[`with-supabase`](https://github.com/vercel/next.js/tree/canary/examples/with-supabase)
+starter. The brewing domain described in the separate `TODO.md` implementation contract is
+**not implemented yet**; this repository currently contains the prepared application
+foundation.
 
-<p align="center">
-  <a href="#features"><strong>Features</strong></a> ·
-  <a href="#demo"><strong>Demo</strong></a> ·
-  <a href="#deploy-to-vercel"><strong>Deploy to Vercel</strong></a> ·
-  <a href="#clone-and-run-locally"><strong>Clone and run locally</strong></a> ·
-  <a href="#feedback-and-issues"><strong>Feedback and issues</strong></a>
-  <a href="#more-supabase-examples"><strong>More Examples</strong></a>
-</p>
-<br/>
+## Status
 
-## Features
+- Official `with-supabase` starter baseline committed before modifications.
+- Default cookie-based Supabase authentication retained and verified locally.
+- Local Supabase tooling, migrations workflow, and Mailpit email testing configured.
+- Bun, Biome, Zod, and Vitest adopted as explicit project decisions.
+- No brewing tables, RLS domain policies, RPC functions, generated database types, or
+  domain UI have been added. Those belong to the `TODO.md` implementation workstream.
 
-- Works across the entire [Next.js](https://nextjs.org) stack
-  - App Router
-  - Pages Router
-  - Proxy
-  - Client
-  - Server
-  - It just works!
-- supabase-ssr. A package to configure Supabase Auth to use cookies
-- Password-based authentication block installed via the [Supabase UI Library](https://supabase.com/ui/docs/nextjs/password-based-auth)
-- Styling with [Tailwind CSS](https://tailwindcss.com)
-- Components with [shadcn/ui](https://ui.shadcn.com/)
-- Optional deployment with [Supabase Vercel Integration and Vercel deploy](#deploy-your-own)
-  - Environment variables automatically assigned to Vercel project
+See [`docs/setup-decisions.md`](docs/setup-decisions.md) for the dependency review,
+baseline results, and verification evidence.
+See [`docs/domain-conventions.md`](docs/domain-conventions.md) for the database
+conventions that the brewing implementation must follow.
 
-## Demo
+## Stack
 
-You can view a fully working demo at [demo-nextjs-with-supabase.vercel.app](https://demo-nextjs-with-supabase.vercel.app/).
+| Component               | Version |
+| ----------------------- | ------- |
+| Next.js                 | 16.4.4  |
+| React / React DOM       | 19.3.1  |
+| TypeScript              | 5.9.3   |
+| Tailwind CSS            | 3.4.19  |
+| `@supabase/ssr`         | 0.12.7  |
+| `@supabase/supabase-js` | 2.118.0 |
+| Supabase CLI            | 3.0.0   |
+| Zod                     | 4.6.7   |
+| Vitest                  | 5.1.0   |
+| Biome                   | 2.6.4   |
+| Bun                     | 1.3.14  |
 
-## Deploy to Vercel
+## Prerequisites
 
-Vercel deployment will guide you through creating a Supabase account and project.
+- **Bun 1.3.14** (pinned through `packageManager`; only `bun.lock` is committed).
+- **Docker Engine** for the local Supabase stack. The current development machine uses
+  Docker 26.1.5.
+- No global Supabase CLI is required; it is a development dependency.
 
-After installation of the Supabase integration, all relevant environment variables will be assigned to the project so the deployment is fully functioning.
+## Local setup
 
-[![Deploy with Vercel](https://vercel.com/button)](https://vercel.com/new/clone?repository-url=https%3A%2F%2Fgithub.com%2Fvercel%2Fnext.js%2Ftree%2Fcanary%2Fexamples%2Fwith-supabase&project-name=nextjs-with-supabase&repository-name=nextjs-with-supabase&demo-title=nextjs-with-supabase&demo-description=This+starter+configures+Supabase+Auth+to+use+cookies%2C+making+the+user%27s+session+available+throughout+the+entire+Next.js+app+-+Client+Components%2C+Server+Components%2C+Route+Handlers%2C+Server+Actions+and+Middleware.&demo-url=https%3A%2F%2Fdemo-nextjs-with-supabase.vercel.app%2F&external-id=https%3A%2F%2Fgithub.com%2Fvercel%2Fnext.js%2Ftree%2Fcanary%2Fexamples%2Fwith-supabase&demo-image=https%3A%2F%2Fdemo-nextjs-with-supabase.vercel.app%2Fopengraph-image.png)
-
-The above will also clone the Starter kit to your GitHub, you can clone that locally and develop locally.
-
-If you wish to just develop locally and not deploy to Vercel, [follow the steps below](#clone-and-run-locally).
-
-## Clone and run locally
-
-1. You'll first need a Supabase project which can be made [via the Supabase dashboard](https://database.new)
-
-2. Create a Next.js app using the Supabase Starter template npx command
-
-   ```bash
-   npx create-next-app --example with-supabase with-supabase-app
-   ```
-
-   ```bash
-   yarn create next-app --example with-supabase with-supabase-app
-   ```
-
-   ```bash
-   pnpm create next-app --example with-supabase with-supabase-app
-   ```
-
-3. Use `cd` to change into the app's directory
-
-   ```bash
-   cd with-supabase-app
-   ```
-
-4. Rename `.env.example` to `.env.local` and update the following:
-
-```env
-NEXT_PUBLIC_SUPABASE_URL=[INSERT SUPABASE PROJECT URL]
-NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY=[INSERT SUPABASE PROJECT API PUBLISHABLE OR ANON KEY]
+```sh
+bun install --frozen-lockfile
+bun run db:start
+bunx supabase status
 ```
 
-> [!NOTE]
-> This example uses `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY`, which refers to Supabase's new **publishable** key format.
-> Both legacy **anon** keys and new **publishable** keys can be used with this variable name during the transition period. Supabase's dashboard may show `NEXT_PUBLIC_SUPABASE_ANON_KEY`; its value can be used in this example.
-> See the [full announcement](https://github.com/orgs/supabase/discussions/29260) for more information.
+`bun run db:start` starts a reduced local stack: database, Auth, REST, Kong, and Mailpit.
+Studio, storage, realtime, edge runtime, analytics, and the pooler are excluded to keep
+resource use reasonable. Run `bunx supabase start` if you need all services.
 
-Both `NEXT_PUBLIC_SUPABASE_URL` and `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY` can be found in [your Supabase project's API settings](https://supabase.com/dashboard/project/_?showConnect=true)
+Then configure the public environment values:
 
-5. You can now run the Next.js local development server:
+```sh
+cp .env.example .env.local
+```
 
-   ```bash
-   npm run dev
-   ```
+Populate `.env.local` from the `supabase status` output:
 
-   The starter kit should now be running on [localhost:3000](http://localhost:3000/).
+```dotenv
+NEXT_PUBLIC_SUPABASE_URL=http://127.0.0.1:54321
+NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY=<local publishable key>
+```
 
-6. This template comes with the default shadcn/ui style initialized. If you instead want other ui.shadcn styles, delete `components.json` and [re-install shadcn/ui](https://ui.shadcn.com/docs/installation/next)
+Use `PUBLISHABLE_KEY` (or the legacy `ANON_KEY`). **Never** put `SECRET_KEY`,
+`SERVICE_ROLE_KEY`, `JWT_SECRET`, database passwords, or connection strings into
+`NEXT_PUBLIC_*` variables or browser code.
 
-> Check out [the docs for Local Development](https://supabase.com/docs/guides/getting-started/local-development) to also run Supabase locally.
+Start the app:
 
-## Feedback and issues
+```sh
+bun run dev
+```
 
-Please file feedback and issues over on the [Supabase GitHub org](https://github.com/supabase/supabase/issues/new/choose).
+- App: <http://localhost:3000>
+- Local email catcher: <http://127.0.0.1:54324>
+- Local API: <http://127.0.0.1:54321>
 
-## More Supabase examples
+Local Auth confirmation is enabled, and the local email rate limit is raised to 30/hour for
+testing. Hosted deployments must use the hosted project's Auth settings and SMTP
+configuration; local settings must not be treated as production settings.
 
-- [Next.js Subscription Payments Starter](https://github.com/vercel/nextjs-subscription-payments)
-- [Cookie-based Auth and the Next.js 13 App Router (free course)](https://youtube.com/playlist?list=PL5S4mPUpp4OtMhpnp93EFSo42iQ40XjbF)
-- [Supabase Auth and the Next.js App Router](https://github.com/supabase/supabase/tree/master/examples/auth/nextjs)
+## Scripts
+
+| Script               | Purpose                                                   |
+| -------------------- | --------------------------------------------------------- |
+| `bun run dev`        | Next.js development server                                |
+| `bun run build`      | Production build                                          |
+| `bun run start`      | Serve the production build                                |
+| `bun run lint`       | Biome lint                                                |
+| `bun run format`     | Biome format with writes                                  |
+| `bun run check`      | Biome lint, format, and import organization check         |
+| `bun run typecheck`  | `tsc --noEmit`                                            |
+| `bun run test`       | Vitest run                                                |
+| `bun run test:watch` | Vitest watch mode                                         |
+| `bun run db:start`   | Start the reduced local Supabase stack                    |
+| `bun run db:stop`    | Stop local Supabase and back up its data volume           |
+| `bun run db:reset`   | **Destructive to local data:** rebuild the local database |
+| `bun run db:status`  | Show local connection values                              |
+| `bun run db:types`   | Generate `lib/database.types.ts` from the local schema    |
+
+## Database workflow
+
+- Migrations are the schema source of truth. Add one only for a real schema change:
+
+  ```sh
+  bunx supabase migration new <name>
+  bunx supabase db reset
+  ```
+- `supabase db reset` is for the **local** database only.
+- Never run `supabase db reset --linked` or any destructive reset against a hosted project.
+- `supabase stop --no-backup` permanently deletes local data volumes.
+- Generate database types only after the first real schema migration:
+
+  ```sh
+  bun run db:types
+  ```
+
+  Do not hand-edit generated types. They are not runtime validation.
+- The local stack currently has no domain migrations. `db reset` verifies the tooling and
+  Auth bootstrap, not brewing constraints.
+- Integration and concurrency tests must use the local PostgreSQL instance. Do not use
+  SQLite or mocks for database constraint tests.
+
+## Authentication
+
+The starter's browser/server Supabase clients, session refresh, and `proxy.ts` convention
+are retained. Protected pages and future protected actions must verify identity and
+authorization server-side; navigation-level redirects alone are not authorization.
+
+Verified locally through the Auth API and HTTP application routes:
+
+- signup and confirmation email delivery,
+- email confirmation and redirect,
+- password login,
+- refresh-token grant,
+- logout invalidation,
+- password recovery and password update,
+- authenticated `/protected` access, and unauthenticated redirect to login.
+
+### Access policy
+
+Domain access is intentionally undefined and denied until an explicit product decision is
+made: single owner or a trusted group. Do not add multi-user tenancy or tenant fields just
+because authentication exists. Do not treat "authenticated" as "authorized".
+
+## Supabase free-plan constraints
+
+Verified against <https://supabase.com/pricing> on 2026-11-03:
+
+- 500 MB database size per project.
+- 2 active Free projects per organization; additional projects can be paused.
+- Free projects are paused after **1 week of inactivity**.
+- 5 GB egress and 5 GB cached egress per month.
+- 1 GB file storage.
+- **No automatic backups** on the Free plan. See the backup section below.
+- 50,000 monthly active users.
+
+The free plan is suitable for setup and low-volume personal use. Do not rely on it for
+important brewing history without a tested export procedure and an agreed upgrade path.
+
+## Deployment
+
+Not yet deployed: a hosted Supabase project and hosting account are required.
+
+Recommended host: Vercel Hobby (free for personal, non-commercial use). Current key Hobby
+allowances, verified on 2026-11-03:
+
+- 1M CDN requests/month and 100 GB fast data transfer/month.
+- 1M function invocations/month, 4 hours of Fluid active CPU, and 360 GB-hours of
+  provisioned memory/month.
+- 1 hour of runtime logs.
+
+Deployment checklist:
+
+1. Create the hosted Supabase project and record its project reference (not secrets).
+2. Set the hosted Auth Site URL and redirect allowlist; include the production `/protected`
+   and `/auth/update-password` URLs.
+3. Configure `NEXT_PUBLIC_SUPABASE_URL` and
+   `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY` in the host's environment settings.
+4. Build command: `bun run build`. Install command: `bun install --frozen-lockfile`.
+5. Apply reviewed migrations deliberately; keep local resets separate from hosted changes.
+6. Verify signup, confirmation, login, logout, and recovery against the production URLs.
+
+Supabase hosts the database and Auth; it does **not** host this Next.js application.
+
+## Backup and restoration
+
+The Free plan has no automatic backups, so backups are manual:
+
+```sh
+# Schema (custom roles excluded by default)
+bunx supabase db dump --linked -f backups/schema.sql
+
+# Data only
+bunx supabase db dump --linked --data-only -f backups/data.sql
+
+# Roles, if custom roles are introduced later
+bunx supabase db dump --linked --role-only -f backups/roles.sql
+```
+
+- Store backups outside the repository; they are not committed.
+- Test restoration against a scratch local database before relying on a backup.
+- Supabase's `db dump` excludes managed schemas such as `auth` and `storage`. Follow the
+  documented privilege note before restoring: revoke default table privileges from `anon`
+  and `authenticated` in the target database before applying the dump.
+- Do not store important brewing history until export and restoration have been rehearsed.
+
+## Quality checks
+
+```sh
+bun install --frozen-lockfile
+bun run typecheck
+bun run check
+bun run test
+bun run build
+```
+
+Current smoke coverage is a Vitest test for the `cn` helper. Brewing acceptance tests,
+RLS tests, transactional RPC tests, and concurrency tests remain part of `TODO.md`.
+
+## Project structure
+
+```text
+app/                 Starter pages and auth routes
+components/          Starter UI and auth components
+lib/supabase/        Browser, server, and proxy clients retained from the starter
+lib/utils.ts         Starter class-name helper
+docs/                Setup decisions and domain conventions
+proxy.ts             Next.js 16 proxy/session-refresh entry point
+supabase/            Local Supabase config; migrations to be added later
+```
+
+## Attribution
+
+Application foundation based on the official Next.js `with-supabase` example, licensed
+under the Next.js repository's MIT license. Grove was consulted only for dependency
+decisions; no Grove application code, structure, or configuration was imported.

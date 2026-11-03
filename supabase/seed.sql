@@ -1,0 +1,2 @@
+-- Intentionally empty until the brewing domain defines seed data.
+-- Migrations are the schema source of truth; this file is not a schema definition.
