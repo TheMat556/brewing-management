@@ -1,9 +1,9 @@
 # Domain Conventions and Implementation Notes
 
-The brewing foundation is implemented in
-`supabase/migrations/20261103181955_brewing_foundation.sql`. German entity/field names and
-enum values follow `TODO.md`; every domain table carries the `TB_` prefix requested for this
-project. PostgreSQL folds unquoted identifiers to lowercase, so SQL uses `tb_rohstoff`,
+The brewing foundation is implemented through ordered migrations in
+`supabase/migrations/`: enums, one migration per table, then shared functions, triggers,
+RLS, and grants. German entity/field names and enum values follow `TODO.md`; every domain
+table carries the `TB_` prefix requested for this project. PostgreSQL folds unquoted identifiers to lowercase, so SQL uses `tb_rohstoff`,
 `tb_sud`, and so on.
 
 ## Types and identifiers

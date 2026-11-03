@@ -127,8 +127,8 @@ the runner and path-alias configuration work.
   - Local email rate limit is 30/hour for testing. This is not a production setting.
 - `.env.local` uses the local API URL and publishable key only. The local secret key and
   JWT secret are deliberately not placed in the application environment.
-- The brewing foundation migration is committed at
-  `supabase/migrations/20261103181955_brewing_foundation.sql`.
+- The brewing foundation is committed as ordered migrations under
+  `supabase/migrations/` (enums, one per table, then shared logic).
 - `db reset` validates the tooling, Auth bootstrap, and the full brewing migration.
 - Generated TypeScript database types are committed at `lib/database.types.ts` and wired
   into the browser, server, and proxy Supabase clients.
@@ -155,8 +155,9 @@ and SMTP is still required before production use.
 
 ## Domain foundation implemented
 
-- One migration creates all `TB_`-prefixed domain tables, native enums, constraints,
-  indexes, triggers, RLS policies, access allowlist, idempotency support, sequence, and RPCs.
+- Ordered foundation migrations create the prefixed `TB_` tables (one migration per table),
+  native enums, constraints, indexes, triggers, RLS policies, access allowlist, idempotency
+  support, sequence, and RPCs. Shared logic lives in the final migration.
 - Access policy: single owner via `TB_BERECHTIGTER_BENUTZER`; the first authenticated user
   claims ownership with `zugang_beanspruchen()`. All domain access is RLS default-deny.
 - Movement writes are RPC-only for application users, append-only, row-locked per lot, and

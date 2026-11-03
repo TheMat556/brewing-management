@@ -2,7 +2,7 @@
 
 A Next.js + Supabase application scaffolded from the official
 [`with-supabase`](https://github.com/vercel/next.js/tree/canary/examples/with-supabase)
-starter, with the brewing data foundation from `TODO.md` implemented in a single migration.
+starter, with the brewing data foundation from `TODO.md` implemented as ordered migrations.
 
 ## Status
 
@@ -121,9 +121,8 @@ configuration; local settings must not be treated as production settings.
 - `supabase db reset` is for the **local** database only.
 - Never run `supabase db reset --linked` or any destructive reset against a hosted project.
 - `supabase stop --no-backup` permanently deletes local data volumes.
-- The foundation migration is
-  `supabase/migrations/*_brewing_foundation.sql`. It creates the prefixed `TB_` tables,
-  enums, constraints, triggers, RLS policies, and RPC functions.
+- The foundation is split into ordered migrations under `supabase/migrations/`: enums first,
+  one migration per `TB_` table, then shared functions/triggers/RLS/grants.
 - `bun run db:reset` rebuilds the local database and applies the foundation migration. This
   is the required check before merging schema changes.
 - Generate database types after a schema change:
