@@ -1,10 +1,8 @@
 # Brewing Management App
 
-A fresh Next.js + Supabase application scaffolded from the official
+A Next.js + Supabase application scaffolded from the official
 [`with-supabase`](https://github.com/vercel/next.js/tree/canary/examples/with-supabase)
-starter. The brewing domain described in the separate `TODO.md` implementation contract is
-**not implemented yet**; this repository currently contains the prepared application
-foundation.
+starter, with the brewing data foundation from `TODO.md` implemented in a single migration.
 
 ## Status
 
@@ -12,16 +10,18 @@ foundation.
 - Default cookie-based Supabase authentication retained and verified locally.
 - Local Supabase tooling, migrations workflow, and Mailpit email testing configured.
 - Bun, Biome, Zod, and Vitest adopted as explicit project decisions.
-- No brewing tables, RLS domain policies, RPC functions, generated database types, or
-  domain UI have been added. Those belong to the `TODO.md` implementation workstream.
+- Brewing schema, constraints, triggers, RLS, transactional RPCs, generated database types,
+  and application validation implemented.
+- Domain access uses a single-owner allowlist; authenticated users are not authorized until
+  listed.
 - The hosted Supabase project, production environment variables, and production Auth
   verification are **deferred by the project owner** as of 2026-11-03. Local Supabase is the
   current development target.
 
 See [`docs/setup-decisions.md`](docs/setup-decisions.md) for the dependency review,
 baseline results, and verification evidence.
-See [`docs/domain-conventions.md`](docs/domain-conventions.md) for the database
-conventions that the brewing implementation must follow.
+See [`docs/domain-conventions.md`](docs/domain-conventions.md) for the implemented database
+conventions, access policy, RPC boundaries, and constraints.
 
 ## Stack
 
@@ -36,6 +36,7 @@ conventions that the brewing implementation must follow.
 | Supabase CLI            | 3.0.0   |
 | Zod                     | 4.6.7   |
 | Vitest                  | 5.1.0   |
+| `pg` (dev)              | 8.23.1  |
 | Biome                   | 2.6.4   |
 | Bun                     | 1.3.14  |
 
@@ -91,22 +92,23 @@ configuration; local settings must not be treated as production settings.
 
 ## Scripts
 
-| Script               | Purpose                                                   |
-| -------------------- | --------------------------------------------------------- |
-| `bun run dev`        | Next.js development server                                |
-| `bun run build`      | Production build                                          |
-| `bun run start`      | Serve the production build                                |
-| `bun run lint`       | Biome lint                                                |
-| `bun run format`     | Biome format with writes                                  |
-| `bun run check`      | Biome lint, format, and import organization check         |
-| `bun run typecheck`  | `tsc --noEmit`                                            |
-| `bun run test`       | Vitest run                                                |
-| `bun run test:watch` | Vitest watch mode                                         |
-| `bun run db:start`   | Start the reduced local Supabase stack                    |
-| `bun run db:stop`    | Stop local Supabase and back up its data volume           |
-| `bun run db:reset`   | **Destructive to local data:** rebuild the local database |
-| `bun run db:status`  | Show local connection values                              |
-| `bun run db:types`   | Generate `lib/database.types.ts` from the local schema    |
+| Script                     | Purpose                                                   |
+| -------------------------- | --------------------------------------------------------- |
+| `bun run dev`              | Next.js development server                                |
+| `bun run build`            | Production build                                          |
+| `bun run start`            | Serve the production build                                |
+| `bun run lint`             | Biome lint                                                |
+| `bun run format`           | Biome format with writes                                  |
+| `bun run check`            | Biome lint, format, and import organization check         |
+| `bun run typecheck`        | `tsc --noEmit`                                            |
+| `bun run test`             | Vitest unit tests                                         |
+| `bun run test:watch`       | Vitest watch mode                                         |
+| `bun run test:integration` | Local PostgreSQL acceptance tests                         |
+| `bun run db:start`         | Start the reduced local Supabase stack                    |
+| `bun run db:stop`          | Stop local Supabase and back up its data volume           |
+| `bun run db:reset`         | **Destructive to local data:** rebuild the local database |
+| `bun run db:status`        | Show local connection values                              |
+| `bun run db:types`         | Generate `lib/database.types.ts` from the local schema    |
 
 ## Database workflow
 
@@ -119,17 +121,28 @@ configuration; local settings must not be treated as production settings.
 - `supabase db reset` is for the **local** database only.
 - Never run `supabase db reset --linked` or any destructive reset against a hosted project.
 - `supabase stop --no-backup` permanently deletes local data volumes.
-- Generate database types only after the first real schema migration:
+- The foundation migration is
+  `supabase/migrations/*_brewing_foundation.sql`. It creates the prefixed `TB_` tables,
+  enums, constraints, triggers, RLS policies, and RPC functions.
+- `bun run db:reset` rebuilds the local database and applies the foundation migration. This
+  is the required check before merging schema changes.
+- Generate database types after a schema change:
 
   ```sh
   bun run db:types
   ```
 
   Do not hand-edit generated types. They are not runtime validation.
-- The local stack currently has no domain migrations. `db reset` verifies the tooling and
-  Auth bootstrap, not brewing constraints.
 - Integration and concurrency tests must use the local PostgreSQL instance. Do not use
   SQLite or mocks for database constraint tests.
+- Integration tests refuse to run unless the API and database hosts are local and the
+  database port is `54322`.
+
+  ```sh
+  cp .env.test.example .env.test.local
+  # Fill values from: bunx supabase status -o env
+  bun run test:integration
+  ```
 
 ## Authentication
 
@@ -149,9 +162,27 @@ Verified locally through the Auth API and HTTP application routes:
 
 ### Access policy
 
-Domain access is intentionally undefined and denied until an explicit product decision is
-made: single owner or a trusted group. Do not add multi-user tenancy or tenant fields just
-because authentication exists. Do not treat "authenticated" as "authorized".
+The brewing domain uses a **single-owner allowlist**. RLS denies all domain access unless
+`auth.uid()` appears in `TB_BERECHTIGTER_BENUTZER`; being authenticated is not sufficient.
+
+The first authenticated user claims ownership once:
+
+```ts
+await supabase.rpc("zugang_beanspruchen");
+```
+
+This must be called with a real user session, not the service-role key. After ownership is
+claimed, add further trusted users deliberately with the service role if the policy ever
+changes. Domain tables and RPCs are not accessible anonymously.
+
+The implemented RPCs are:
+
+- `rezept_erstellen`, `rezeptversion_erstellen`, `rezeptversion_freigeben`,
+  `rezeptversion_loeschen`
+- `sud_aus_rezept_erstellen`
+- `lagerbewegung_erfassen`, `sudzutat_verbrauch_netto`, `sudzutat_ist_menge_setzen`,
+  `sudzutat_ersetzen`
+- `naechste_sudnummer`, `zugang_beanspruchen`
 
 ## Supabase free-plan constraints
 
@@ -222,22 +253,27 @@ bun install --frozen-lockfile
 bun run typecheck
 bun run check
 bun run test
+bun run test:integration
 bun run build
 ```
 
-Current smoke coverage is a Vitest test for the `cn` helper. Brewing acceptance tests,
-RLS tests, transactional RPC tests, and concurrency tests remain part of `TODO.md`.
+Current coverage: unit tests for the starter helper and Zod domain validation, plus 25
+PostgreSQL integration tests covering RLS, recipe/version lifecycle, copy semantics,
+substitution, inventory movements, corrections, idempotency, concurrency, equipment
+snapshots, archiving, and destructive-delete protection.
 
 ## Project structure
 
 ```text
-app/                 Starter pages and auth routes
-components/          Starter UI and auth components
-lib/supabase/        Browser, server, and proxy clients retained from the starter
-lib/utils.ts         Starter class-name helper
-docs/                Setup decisions and domain conventions
-proxy.ts             Next.js 16 proxy/session-refresh entry point
-supabase/            Local Supabase config; migrations to be added later
+app/                  Starter pages and auth routes
+components/           Starter UI and auth components
+lib/supabase/         Browser, server, and proxy clients with generated Database types
+lib/database.types.ts Generated Supabase types
+lib/domain/           Zod validation and local PostgreSQL acceptance tests
+docs/                 Setup decisions and domain conventions
+proxy.ts              Next.js 16 proxy/session-refresh entry point
+supabase/migrations/  Brewing foundation migration
+supabase/config.toml  Local Supabase configuration
 ```
 
 ## Attribution

@@ -1,275 +1,214 @@
-# Domain Conventions for the Brewing Implementation
+# Domain Conventions and Implementation Notes
 
-Status: preparation only. No brewing tables, migrations, RLS policies, RPC functions, or
-generated database types exist yet. This document fixes conventions so the `TODO.md`
-implementation does not have to make the same decisions twice.
+The brewing foundation is implemented in
+`supabase/migrations/20261103181955_brewing_foundation.sql`. German entity/field names and
+enum values follow `TODO.md`; every domain table carries the `TB_` prefix requested for this
+project. PostgreSQL folds unquoted identifiers to lowercase, so SQL uses `tb_rohstoff`,
+`tb_sud`, and so on.
 
-The German entity names, field names, and enum values in `TODO.md` are authoritative. This
-document does not add entities or change scope.
+## Types and identifiers
 
-## Naming
-
-- Keep German entity and field names exactly as specified.
-- PostgreSQL folds unquoted identifiers to lowercase, so SQL uses `rohstoff`,
-  `ziel_stammwuerze_plato`, etc. Application-facing TypeScript types may expose the same
-  names; documentation and UI labels may be English.
-- Enum values stay uppercase German, for example `MALZ`, `HOPFEN`, `ENTWURF`, `GEPLANT`,
-  `ABGESCHLOSSEN`.
-- Do not rename a domain field to an English synonym in the database or generated types.
-- Application-only helpers may use English names, but they must not become domain columns.
-
-## Primary and foreign keys
-
-- Use `bigint generated always as identity` for all domain primary keys.
-- Foreign keys use `bigint` with matching nullability.
-- Prefer composite foreign keys for step ownership:
-  - `REZEPTSCHRITT(id, rezeptversion_id)` unique, referenced by
-    `REZEPTZUTAT(rezeptschritt_id, rezeptversion_id)`.
-  - `SUDSCHRITT(id, sud_id)` unique, referenced by `SUDZUTAT(sudschritt_id, sud_id)`.
-    This enforces that an assigned step belongs to the same parent without a row-level CHECK
-    across tables.
-- PostgreSQL sequences and identity columns can allocate gaps. Gaps are acceptable;
-  application code must not assume contiguous IDs.
-
-## BIGINT and decimal handling across the API
-
-PostgREST serializes `bigint` and `numeric` values as JSON numbers, and `supabase-js`
-exposes them as JavaScript numbers. Consequences:
-
-- BIGINT IDs are safe while below `Number.MAX_SAFE_INTEGER` (2^53 - 1). Identity-generated
-  IDs will remain far below that limit in this application. Do not use JavaScript arithmetic
-  to construct or compare arbitrary PostgreSQL BIGINT values.
-- Numeric values must be small and scaled enough to round-trip safely. The proposed types
-  below stay far below the safe-integer range, but JavaScript still does not preserve the
-  original decimal scale (for example, `1.2300` may become `1.23`).
-- Never use JavaScript floating-point arithmetic for brewing or inventory calculations.
-  Perform sums, comparisons, and locking in SQL, or return exact values as text from an RPC
-  when exact decimal representation matters.
-- API inputs are validated with Zod as well as database constraints. Database constraints
-  remain the final authority.
-
-## Proposed numeric precision and scale
-
-Final precision must be confirmed in the first domain migration, but the implementation
-should start from a documented, consistent proposal:
-
-| Data                                                                | Proposed type   | Notes                                                        |
-| ------------------------------------------------------------------- | --------------- | ------------------------------------------------------------ |
-| Ingredient quantities in base units (g, ml, Stück)                  | `numeric(12,4)` | Preserves fractional grams and milliliters; 8 integer digits |
-| Water volumes, output volumes, bottled volume, LOB volumes          | `numeric(12,4)` | Same scale for consistent handling                           |
-| Durations and addition offsets in minutes                           | `numeric(12,4)` | Preserves fractional minutes                                 |
-| Alpha-acid %, ABV %, Plato, IBU, EBC                                | `numeric(8,4)`  | Up to 9,999.9999; separate range checks apply                |
-| Counts (`menge`, `zugewiesene_menge`, `versionsnummer`, `position`) | `integer`       | Not decimals                                                 |
-
-Additional checks from `TODO.md` still apply: nonnegative quantities, 0–100 percentages,
-nonzero movement deltas, and signed movement rules. Do not use `float`, `real`, or
-`double precision` for stored brewing values.
-
-## Temporal data
-
-- Store instants as `timestamptz`; normalize to UTC for storage and convert for display.
-  This applies to `erstellt_am`, `freigegeben_am`, `zeitpunkt`, `gestartet_am`, and
-  `beendet_am`.
-- Store `braudatum`, `lieferdatum`, and `mhd` as `date`.
-- Proposed defaults, to be confirmed in the migration:
-  - `REZEPT.erstellt_am` and `REZEPTVERSION.erstellt_am`: `now()`;
-  - `SUD.erstellt_am`: `now()`;
-  - `LAGERBEWEGUNG.zeitpunkt`: `now()` unless the caller supplies an explicit timestamp.
-- Do not default actual brewing values or actual quantities. NULL means unrecorded; zero is
-  a recorded value.
+- All domain primary keys use `bigint generated always as identity`; foreign keys match.
+- Quantities, volumes, durations, and addition offsets use `numeric(12,4)`.
+- Percentages and brewing values use `numeric(8,4)`; alpha-acid and ABV are additionally
+  constrained to 0–100.
+- Instants use `timestamptz`; `braudatum`, `lieferdatum`, and `mhd` use `date`.
+- No binary floating-point type is used for stored brewing values.
+- BIGINT and numeric values cross PostgREST as JavaScript numbers. They remain below
+  `Number.MAX_SAFE_INTEGER` in this application. Exact arithmetic is done in SQL; do not
+  use JavaScript floating point for inventory or brewing calculations.
+- Unknown values stay NULL. Zero is a recorded value and is never used as an unknown
+  sentinel.
 
 ## Nullability and defaults
 
-Follow `TODO.md` exactly:
+- Required columns follow `TODO.md`: IDs, required foreign keys, names, enums, booleans,
+  positions, version numbers, creation/movement timestamps, `lieferdatum`, `sudnummer`,
+  snapshot names/units, planned amounts.
+- Optional foreign keys are only `tb_rezeptzutat.rezeptschritt_id`,
+  `tb_sudzutat.sudschritt_id`, and `tb_lagerbewegung.sudzutat_id`.
+- Descriptions, instructions, notes/infos, supplier lot, `mhd`, release timestamps,
+  process timestamps, actual values, actual amounts, bottled volume, alpha/EBC inputs, and
+  optional LOB values are nullable.
+- `archiviert` defaults to false, recipe version status to `ENTWURF`, batch status to
+  `GEPLANT`, and `lob_genutzt` to false.
+- Required names and `sudnummer` are checked as nonblank after trimming.
 
-- Required: IDs, required foreign keys, names, enum fields, booleans, positions, version
-  numbers, creation timestamps, movement timestamps, `lieferdatum`, `sudnummer`, snapshot
-  names/units, planned quantities.
-- Optional foreign keys only: `REZEPTZUTAT.rezeptschritt_id`, `SUDZUTAT.sudschritt_id`,
-  `LAGERBEWEGUNG.sudzutat_id`.
-- Optional values include descriptions, instructions, notes, infos, supplier lot number,
-  `mhd`, release timestamp, brewing date, process timestamps, actual values, actual
-  quantities, bottled volume, optional target values, alpha-acid/EBC inputs, and optional
-  LOB values.
-- Defaults: `archiviert = false`, recipe version status `ENTWURF`, batch status `GEPLANT`,
-  `lob_genutzt = false`.
-- Do not use zero as an unknown sentinel. Unknown targets and actuals stay NULL.
-- Validate names and `sudnummer` as nonblank after trimming. No global uniqueness for
-  ingredient, recipe, or equipment names.
+## Enumerations
 
-## Enum strategy
+Native PostgreSQL enums enforce the contract values; Zod mirrors them for application
+validation. Values are byte-for-byte aligned with `TODO.md`:
 
-Proposed: native PostgreSQL enums for the fixed value sets in `TODO.md`, plus Zod
-validation at application boundaries. Native enums give generated TypeScript union types
-and database-level rejection of invalid values. Add new values through migrations.
+- `rohstoff_kategorie`: `MALZ`, `HOPFEN`, `HEFE`, `GEWUERZ`, `SONSTIGES`
+- `basiseinheit`: `g`, `ml`, `Stueck`
+- `rezeptversion_status`: `ENTWURF`, `FREIGEGEBEN`
+- `sud_status`: `GEPLANT`, `IN_ARBEIT`, `ABGESCHLOSSEN`, `VERWORFEN`
+- `lagerbewegung_typ`: `ZUGANG`, `VERBRAUCH`, `KORREKTUR`, `ENTSORGUNG`
+- `prozessschritt_typ`: `EINMAISCHEN`, `RAST`, `NACHGUSS`, `KOCHEN`, `GAERUNG`,
+  `KALTHOPFUNG`, `REIFUNG`, `ABFUELLUNG`, `SONSTIGES`
 
-If a value set is expected to change frequently, a `CHECK` constraint is an acceptable
-alternative; the `TODO.md` contract allows either. Whichever is chosen, document it in the
-migration and keep the values byte-for-byte identical to the contract.
+## Access policy
 
-Required value sets:
+Domain access is **single-owner via allowlist**:
 
-- `ROHSTOFF.kategorie`: `MALZ`, `HOPFEN`, `HEFE`, `GEWUERZ`, `SONSTIGES`
-- `ROHSTOFF.basiseinheit`: `g`, `ml`, `Stueck`
-- `REZEPTVERSION.status`: `ENTWURF`, `FREIGEGEBEN`
-- `SUD.status`: `GEPLANT`, `IN_ARBEIT`, `ABGESCHLOSSEN`, `VERWORFEN`
-- `LAGERBEWEGUNG.typ`: `ZUGANG`, `VERBRAUCH`, `KORREKTUR`, `ENTSORGUNG`
-- `REZEPTSCHRITT.typ` / `SUDSCHRITT.typ`: `EINMAISCHEN`, `RAST`, `NACHGUSS`, `KOCHEN`,
-  `GAERUNG`, `KALTHOPFUNG`, `REIFUNG`, `ABFUELLUNG`, `SONSTIGES`
+- `TB_BERECHTIGTER_BENUTZER` contains authorized auth user IDs.
+- RLS is enabled on every domain table; all policies require
+  `public.ist_berechtigt()`.
+- The first authenticated user claims ownership with `zugang_beanspruchen()`. The function
+  takes an exclusive lock and refuses a second claim.
+- Anonymous access is denied by explicit revokes and the absence of anonymous policies.
+- Table grants are explicit. Movement rows are read-only to authenticated users; writes go
+  through the transactional RPC.
+- The service/secret key is server-side administration and test tooling only; it never goes
+  to the browser or a `NEXT_PUBLIC_*` variable.
 
-## Row-level security and grants
+## Transactions and RPCs
 
-- Enable RLS on every exposed domain table.
-- Default deny. Do not create anonymous policies unless a later product decision
-  explicitly requires public read access; the default is no anonymous domain access.
-- `authenticated` does not automatically mean authorized. The access policy must be
-  decided before domain policies are written: single owner or trusted group.
-- Grant only the privileges needed by the chosen API paths. Review table grants as well as
-  policies; a permissive grant can expose data even with RLS enabled if policies are
-  incomplete.
-- Prefer RPC-only writes for multi-table and stock operations. Revoke direct
-  insert/update/delete privileges on those tables where the RPC is the intended write path.
-- Elevated functions:
-  - `security definer` only when required by the operation;
-  - `set search_path = ''` and fully schema-qualify every referenced object;
-  - `revoke all on function ... from public, anon`;
-  - grant execute only to `authenticated` (or a narrower role);
-  - re-check `auth.uid()` and the access policy inside the function.
-- The service-role/secret key is for controlled server-side administration and tests only.
-  It must never be shipped to the browser or placed in a `NEXT_PUBLIC_*` variable.
-- Every new table requires an explicit grant/policy review; `auto_expose_new_tables` must
-  not be treated as a security policy.
+Multiple PostgREST calls are not atomic. The implemented RPC boundaries are:
 
-## Transactions and RPC boundaries
+- `rezept_erstellen` — recipe plus first draft version in one transaction.
+- `rezeptversion_erstellen` — locks the parent recipe row and allocates the next version.
+- `rezeptversion_freigeben` — status/release timestamp in one transaction.
+- `rezeptversion_loeschen` — draft-only, final-version guard.
+- `sud_aus_rezept_erstellen` — batch, copied steps, copied ingredients, and step-ID remap in
+  one transaction.
+- `lagerbewegung_erfassen` — idempotent movement write with lot locking and stock check.
+- `sudzutat_ersetzen` — replacement only before movements exist; unit-change guard.
+- `sudzutat_ist_menge_setzen` — actual-use recording with optional inventory reconciliation.
+- `sudzutat_verbrauch_netto` — net issued quantity from linked movements.
+- `naechste_sudnummer` — sequence-backed batch number allocation (`SUD-000001` format).
 
-Multiple independent PostgREST calls are not one transaction. Use PostgreSQL functions via
-RPC for operations that must be atomic:
-
-- create a recipe and its first draft version;
-- release a recipe version;
-- create a batch with its steps and ingredients, including step-ID remapping;
-- substitute a batch ingredient when a movement history check is required;
-- record one or more inventory movements with lot locking and negative-stock rejection;
-- any correction/reversal operation that spans multiple rows;
-- deletion of unused draft content.
-
-Each function must validate inputs, check row counts, raise a clear SQL exception on
-failure, and commit all effects or none.
+All RPCs use `security definer`, `set search_path = ''`, schema-qualified objects, and an
+explicit `assert_berechtigt()` check. Execute privileges are revoked from public/anon and
+granted only to authenticated. Trigger functions are internal and have no application
+execute grant.
 
 ## Concurrency and idempotency
 
-- **Lot stock writes:** lock affected `LAGERCHARGE` rows with `SELECT ... FOR UPDATE` before
-  reading `SUM(LAGERBEWEGUNG.mengen_delta)` and inserting movements. Lock multiple lots in
-  ascending ID order and use the same order everywhere. Keep the check and writes in one
-  transaction. Reject any resulting negative stock.
-- **Recipe version numbers:** allocate under a lock on the parent `REZEPT` row (or an
-  equivalent database lock), then compute the next number. Do not use an unlocked
-  `MAX + 1`. The unique constraint `(rezept_id, versionsnummer)` is the final guard.
-- **Batch numbers:** allocate with a database sequence or a locked counter, not a read-then-
-  write race. `UNIQUE(sudnummer)` is the final guard. The string format is still a product
-  decision; do not invent one silently.
-- **Idempotency:** there is no existing mechanism in the starter. Use a small internal
-  request-key table with a unique constraint scoped to the operation and caller, inserted in
-  the same transaction as the movement/operation. A retry with the same key returns the
-  prior result or a duplicate indication instead of creating a second movement.
-- **Tests:** concurrency claims must be demonstrated against local PostgreSQL with real
-  parallel connections, not with mocks or SQLite.
+- Movement triggers lock the affected `tb_lagercharge` row with `FOR UPDATE`, then sum
+  movements and reject negative stock. Concurrent withdrawals serialize on that row.
+- Recipe version allocation locks the parent `tb_rezept` row; `UNIQUE(rezept_id,
+  versionsnummer)` is the final guard.
+- Batch numbers use the `tb_sud_nummer_seq` sequence; `UNIQUE(sudnummer)` is the final guard.
+- `TB_IDEMPOTENZ` stores `(operation, idempotenzschluessel)` and the resulting movement ID.
+  Retries return the original movement instead of inserting a duplicate.
+- Integration tests demonstrate concurrent stock, version allocation, and batch-number
+  allocation against real local PostgreSQL.
 
-## Immutability, snapshots, and cross-entity integrity
+## Immutability and snapshots
 
-- Released recipe versions and their ingredient/step rows are immutable. A trigger must
-  allow the release transition (`ENTWURF` → `FREIGEGEBEN`, setting `freigegeben_am`) and
-  reject all later content changes. Changes require a new draft version.
-- `freigegeben_am` is NULL for `ENTWURF` and non-NULL for `FREIGEGEBEN`. Enforce this with a
-  CHECK constraint in addition to the release function.
-- Copy recipe name/description into version snapshots at version creation; snapshots remain
-  editable only while draft.
-- Copy ingredient name and base unit into ingredient snapshots when the ingredient is added.
-  Do not refresh historical snapshots when master data changes.
-- Snapshot units must equal the ingredient's base unit at creation or explicit replacement.
-  Prevent changing `ROHSTOFF.basiseinheit` once the ingredient is referenced by lots, recipe
-  ingredients, or batch ingredients.
-- Prevent changing `LAGERCHARGE.rohstoff_id` once the lot has movements.
-- A movement linked to a batch ingredient must reference a lot of the same `ROHSTOFF`.
-  Enforce this in the RPC write path and use a trigger as defense in depth against direct
-  writes; document the chosen combination. Do not attempt this with an ordinary row CHECK.
-- Prevent changing `SUD.rezeptversion_id` after batch creation in this implementation.
-- Prevent deleting the final version of a retained recipe. A plain child foreign key cannot
-  enforce the minimum-one relationship; use a controlled function/trigger.
-- Equipment assignment validates `zugewiesene_menge <= GERAET.menge` and LOB eligibility at
-  assignment/update time, then preserves snapshots. Historical assignments are not
-  recomputed when master data changes.
-- Do not add `rezeptzutat_id` to `SUDZUTAT`. Substitution history is represented by new
-  batch ingredient rows and notes, not by rewriting old movements.
+- Released recipe versions and their ingredient/step rows are immutable. The trigger allows
+  only the release transition and rejects later updates, inserts, deletes, or status
+  rollback.
+- `freigegeben_am` is NULL for drafts and non-NULL for released versions; release must be
+  after creation.
+- Recipe name/description snapshots are copied at version creation.
+- Ingredient snapshots are copied on insert and on explicit replacement. Master-data renames
+  do not refresh historical snapshots.
+- Base units are locked once referenced by a lot, recipe ingredient, or batch ingredient.
+- A lot's `rohstoff_id` is locked once it has movements.
+- `tb_sud.rezeptversion_id` is immutable after batch creation.
+- Step ownership uses composite foreign keys:
+  - `(rezeptschritt_id, rezeptversion_id) → tb_rezeptschritt(id, rezeptversion_id)`
+  - `(sudschritt_id, sud_id) → tb_sudschritt(id, sud_id)`
+- A movement linked to a batch ingredient must use a lot of the same raw ingredient. The
+  trigger enforces this on every movement insert.
+- Batch step duration is derived from complete start/end timestamps; manual values remain
+  possible when timestamps are incomplete.
 
-## Deletion and archiving
+## Ingredient substitution
 
-- Prefer archiving `ROHSTOFF`, `REZEPT`, and `GERAET` to deleting them.
-- Use `ON DELETE RESTRICT` for referenced historical records. Never cascade-delete inventory
-  movements, batches, or released recipe history.
-- Permit deletion of unused draft content only through controlled operations.
-- If a draft step with assigned ingredients is deleted, reject it or clear assignments
-  explicitly first; never leave dangling references.
-- A batch ingredient with any movement history cannot be deleted, even when net quantity is
-  zero.
-- Archiving a recipe does not permit modifying or deleting its released versions.
+- Replacement is allowed only before the batch ingredient has any movement.
+- `sudzutat_ersetzen` updates ingredient snapshots and explicitly sets or clears alpha/EBC
+  inputs.
+- A base-unit change requires a newly entered quantity; the same number is never silently
+  reinterpreted.
+- Direct `rohstoff_id` replacement clears alpha/EBC inputs; the RPC reapplies explicitly
+  supplied values.
+- Once movements exist, retain the original row, reverse errors with new movements, and add
+  a new `tb_sudzutat` row for the replacement.
+- Multiple rows can represent partial replacement or splitting a recipe ingredient.
+- No `rezeptzutat_id` and no mandatory substitution table were added.
 
-## Actual use versus stock movement
+## Inventory booking
 
-- `ist_menge` is the amount actually used in brewing, not automatically the sum of linked
-  movements.
-- Direct-use ingredients may have `ist_menge` with no inventory movement.
-- When an ingredient is fully supplied from inventory, `ist_menge` must equal the net amount
-  issued for use, accounting for linked consumption and its reversals/corrections.
-- Booking convention: movements linked to a `SUDZUTAT` represent consumption or corrections
-  of that consumption. Ordinary receipts, disposal, and unrelated corrections remain
-  unlinked. Do not include them in actual-use reconciliation.
-- If multiple lots with different alpha-acid or EBC values supply one ingredient, use
-  separate `SUDZUTAT` rows or store an explicitly documented quantity-weighted input. Never
-  silently choose one lot's value.
-- Record movements only for actual consumption, not for planned quantities.
+- Lot stock is `SUM(mengen_delta)`, zero when no movements exist.
+- Initial stock is a `ZUGANG` movement, not a mutable balance field.
+- Movements are append-only. Corrections are new `KORREKTUR` movements with notes.
+- `ZUGANG > 0`; `VERBRAUCH`/`ENTSORGUNG < 0`; `KORREKTUR` is either sign but not zero.
+- Linked movements are limited to `VERBRAUCH`, `KORREKTUR`, and `ENTSORGUNG`.
+- Actual use (`ist_menge`) is recorded independently of planned quantities. Direct-use
+  ingredients may have `ist_menge` without movements. When inventory-supplied, the
+  reconciliation RPC requires it to equal the net issued amount.
+- Multiple lots with different alpha/EBC values must use separate batch ingredient rows or
+  an explicitly documented weighted value; no lot value is silently chosen.
 
-## Database-enforced versus application-enforced invariants
+## Equipment
 
-Proposed split; finalize while writing the migration and tests:
+- `TB_GERAET` represents a group of equivalent items, not serialized assets.
+- `TB_SUDGERAET` stores batch-specific quantity, LOB usage, and snapshots.
+- Assignment copies name and per-item LOB volume; later master-data changes do not refresh
+  snapshots.
+- Assigned quantity must not exceed the current group quantity.
+- LOB use requires current LOB capability and a known snapshot volume.
+- No time-based reservations, availability sums, individual assets, maintenance, or
+  scheduling were added.
 
-| Invariant                                                | Database                           | Application/RPC            |
-| -------------------------------------------------------- | ---------------------------------- | -------------------------- |
-| Enum values, numeric ranges, sign rules                  | CHECK/enum constraints             | Zod mirror                 |
-| Uniqueness of version/step positions/equipment/sudnummer | UNIQUE constraints                 | Friendly error mapping     |
-| Snapshot unit equals base unit                           | Trigger                            | Validate before save       |
-| Step belongs to same version/batch                       | Composite FK                       | Validate step map          |
-| Movement lot/ingredient match                            | Trigger + RPC write path           | RPC validation             |
-| Released content immutable                               | Trigger                            | Disallow edit actions      |
-| Base unit/lot ingredient identity locked                 | Trigger                            | Disable UI fields          |
-| Minimum one recipe version                               | Trigger/controlled function        | Recipe delete guard        |
-| Negative stock rejection                                 | RPC transaction + lot lock         | Error presentation         |
-| Version/sudnummer allocation                             | Row lock/sequence + unique         | Retry messaging            |
-| Actual-use reconciliation                                | RPC/query contract                 | Explain manual differences |
-| Access policy                                            | RLS + RPC checks                   | Server-side auth checks    |
-| Equipment availability at assignment                     | RPC check against current quantity | UI limits, no reservation  |
+## Historical integrity and deletion
 
-## Brewing-value semantics still to decide
+- Recipes, raw ingredients, and equipment are archived rather than deleted.
+- Referenced records use restrictive foreign keys; no cascade deletes for movements,
+  batches, or released recipe history.
+- Draft-only deletion is exposed through controlled functions/guards.
+- A draft step with assigned ingredients cannot be deleted until assignments are cleared.
+- A batch ingredient with movements cannot be deleted or have its ingredient identity
+  changed.
+- The final recipe version cannot be deleted.
 
-Do not implement formulas until these product decisions are explicitly made:
+## Brewing-value semantics decided for this implementation
 
-- Whether `ist_abv_prozent`, `ist_ibu`, and `ist_ebc` are measured results or calculations
-  from actual inputs; never present calculated values as laboratory measurements.
-- The reference point for `ausschlagmenge` (for example, kettle versus fermenter) and
-  consistent application to recipe and batch fields.
-- Batch status behavior. No mandatory transition graph or automatic inventory effects are
-  implied; document the chosen behavior when implementing status changes.
-- `ist_dauer_min`: treat as elapsed duration. If both start and end timestamps exist, derive
-  it from the timestamps; a manual duration is allowed only when timestamps are incomplete.
-- LOB semantics. The fields exist; do not invent a meaning or formula.
+- `ist_abv_prozent`, `ist_ibu`, and `ist_ebc` record operator-entered actual values. No
+  automatic formulas calculate or overwrite them. Calculated values must not be presented as
+  laboratory measurements.
+- `ausschlagmenge` refers to the volume of cooled wort transferred to the fermenter. Target
+  and actual values use the same reference point.
+- `ist_dauer_min` is elapsed duration. When both start and end timestamps exist, the trigger
+  derives it; manual entry is allowed only when timestamps are incomplete.
+- Batch statuses are informational. No mandatory transition graph and no automatic inventory
+  effects are implemented.
+- LOB remains an existing domain term; no formula or additional meaning is invented.
+- No ABV, IBU, EBC, efficiency, or recipe-scaling formulas are implemented.
 
-## Open decisions before the first domain migration
+## Database-enforced versus application-enforced
 
-1. Access policy: single owner or trusted group.
-2. Confirm native enums versus CHECK constraints.
-3. Confirm the proposed numeric precision/scale.
-4. Confirm the `sudnummer` format and allocation mechanism.
-5. Confirm the idempotency key table name/shape.
-6. Confirm where calculated versus measured brewing values are allowed.
-7. Confirm the `ausschlagmenge` reference point.
-8. Confirm backup/restore rehearsal before storing real brewing history.
+| Invariant                                   | Enforcement                          |
+| ------------------------------------------- | ------------------------------------ |
+| Enum values, ranges, signs, nonzero deltas  | CHECK constraints and native enums   |
+| Version/step/equipment/sudnummer uniqueness | UNIQUE constraints                   |
+| Step ownership                              | Composite foreign keys               |
+| Ingredient snapshot units/names             | Triggers                             |
+| Base-unit and lot-ingredient locking        | Triggers                             |
+| Movement lot/ingredient match               | Trigger plus RPC write path          |
+| Released-version immutability               | Triggers                             |
+| Final-version protection                    | Trigger plus RPC                     |
+| Negative stock rejection                    | Row lock + trigger + RPC transaction |
+| Version/batch number allocation             | Parent row lock / sequence + UNIQUE  |
+| Idempotent retries                          | `TB_IDEMPOTENZ` unique key           |
+| Actual-use reconciliation                   | RPC contract                         |
+| Access policy                               | RLS, grants, and RPC checks          |
+| Equipment assignment validation             | Trigger plus RPC/CRUD path           |
+
+## Verification
+
+- `bun run db:reset` applies the migration to a clean local database.
+- `bunx supabase db lint --local` reports no schema errors.
+- `bun run test:integration` runs 25 acceptance tests against local PostgreSQL.
+- `bun run test` runs unit tests, including Zod validation.
+- The generated `lib/database.types.ts` is wired into browser/server/proxy clients.
+
+## Remaining product decisions
+
+- Brewing-domain UI screens and workflows.
+- Hosted deployment, production Auth/SMTP verification, and backup rehearsal.
+- Any future automated brewing calculations require a separately specified algorithm and
+  input contract.

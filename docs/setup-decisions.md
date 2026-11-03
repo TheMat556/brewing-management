@@ -82,6 +82,8 @@ there; resolved versions are from this project's lockfile.
 | Radix packages              | Multiple      | Yes                 | Keep                 | Starter UI primitives                                                        |
 | `zod`                       | `^4.4.3`      | No                  | **Add**              | Present in Grove and useful for server-side validation; resolved 4.6.7       |
 | `vitest`                    | `^4.1.10`     | No                  | **Add**              | Test runner; resolved 5.1.0                                                  |
+| `pg`                        | Not present   | No                  | **Add**              | Direct local PostgreSQL acceptance/concurrency tests; resolved 8.23.1        |
+| `@types/pg`                 | Not present   | No                  | **Add**              | TypeScript types for `pg`; resolved 8.23.1                                   |
 | `@biomejs/biome`            | `^2.5.3`      | No                  | **Add**              | Explicit replacement for ESLint; config written from scratch, resolved 2.6.4 |
 | `supabase`                  | Not present   | No                  | **Add**              | Required by setup contract for pinned CLI migrations; resolved 3.0.0         |
 | `@testing-library/react`    | `^16.3.2`     | No                  | Skip for now         | No component tests in setup scope                                            |
@@ -125,9 +127,11 @@ the runner and path-alias configuration work.
   - Local email rate limit is 30/hour for testing. This is not a production setting.
 - `.env.local` uses the local API URL and publishable key only. The local secret key and
   JWT secret are deliberately not placed in the application environment.
-- There are no domain migrations yet; `db reset` validates the tooling and Auth bootstrap
-  only.
-- Generated TypeScript database types are deferred until the first real migration.
+- The brewing foundation migration is committed at
+  `supabase/migrations/20261103181955_brewing_foundation.sql`.
+- `db reset` validates the tooling, Auth bootstrap, and the full brewing migration.
+- Generated TypeScript database types are committed at `lib/database.types.ts` and wired
+  into the browser, server, and proxy Supabase clients.
 
 ## Local verification evidence
 
@@ -149,6 +153,27 @@ Performed against the local Supabase stack:
 The UI forms are retained from the starter. A final human browser pass against hosted Auth
 and SMTP is still required before production use.
 
+## Domain foundation implemented
+
+- One migration creates all `TB_`-prefixed domain tables, native enums, constraints,
+  indexes, triggers, RLS policies, access allowlist, idempotency support, sequence, and RPCs.
+- Access policy: single owner via `TB_BERECHTIGTER_BENUTZER`; the first authenticated user
+  claims ownership with `zugang_beanspruchen()`. All domain access is RLS default-deny.
+- Movement writes are RPC-only for application users, append-only, row-locked per lot, and
+  protected against negative stock. Idempotency keys prevent duplicate retried movements.
+- Released recipe versions and their children are immutable; recipe/batch step ownership
+  uses composite foreign keys.
+- Mixed ownership rules use triggers: ingredient snapshots, base-unit locking, lot
+  ingredient locking, movement lot/ingredient matching, equipment snapshots, and derived
+  batch-step durations.
+- `lib/domain/validation.ts` provides Zod schemas for domain inputs. Generated database
+  types are integrated into all Supabase clients.
+- Local acceptance suite: 25 PostgreSQL integration tests pass, plus unit tests for the
+  starter helper and domain validation.
+
+Detailed table names, constraints, RPC signatures, and semantics are documented in
+[`domain-conventions.md`](domain-conventions.md).
+
 ## Free-plan limits recorded
 
 Verified on 2026-11-03:
@@ -163,13 +188,11 @@ Re-verify both before deploying; pricing and limits change.
 
 ## Deferred work
 
-The following remain in the brewing implementation workstream:
+The following remain outside the completed local foundation:
 
-- Domain schema migration and all German entities, fields, and enum values.
-- RLS policies, grants, access policy, and anonymous-access denial for domain tables.
-- Transactional RPC functions, immutability triggers, and cross-entity constraints.
-- Safe concurrent version and batch-number allocation, lot locks, and idempotency.
-- Generated `lib/database.types.ts` and Supabase client type integration.
-- Brewing acceptance tests, RLS tests, and concurrency tests.
 - Hosted Supabase project, production deployment, and production Auth verification.
-- Backup rehearsal against real brewing data.
+- Backup rehearsal against real brewing history.
+- Brewing-domain UI screens, forms, and navigation.
+- Any automated ABV/IBU/EBC/efficiency/scaling calculations; no formulas are implemented.
+- Individual equipment serialization, maintenance, reservations, or scheduling.
+- Multi-user tenancy. The implemented policy is an explicit single-owner allowlist.
