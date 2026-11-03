@@ -30,7 +30,8 @@ conventions, access policy, RPC boundaries, and constraints.
 | Next.js                 | 16.4.4  |
 | React / React DOM       | 19.3.1  |
 | TypeScript              | 5.9.3   |
-| Tailwind CSS            | 3.4.19  |
+| Tailwind CSS            | 4.3.4   |
+| tw-animate-css          | 1.4.0   |
 | `@supabase/ssr`         | 0.12.7  |
 | `@supabase/supabase-js` | 2.118.0 |
 | Supabase CLI            | 3.0.0   |
