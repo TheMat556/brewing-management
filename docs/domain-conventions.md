@@ -86,12 +86,19 @@ execute grant.
 ## Concurrency and idempotency
 
 - Movement triggers lock the affected `tb_lagercharge` row with `FOR UPDATE`, then sum
-  movements and reject negative stock. Concurrent withdrawals serialize on that row.
+  movements and reject negative stock. Concurrent withdrawals serialize on that row. The
+  current RPC affects one lot per transaction; any future multi-lot operation must lock lots
+  in ascending ID order.
 - Recipe version allocation locks the parent `tb_rezept` row; `UNIQUE(rezept_id,
   versionsnummer)` is the final guard.
+- New versions must start as `ENTWURF`; a batch must reference a released version. Both are
+  enforced by triggers as well as the RPCs.
 - Batch numbers use the `tb_sud_nummer_seq` sequence; `UNIQUE(sudnummer)` is the final guard.
 - `TB_IDEMPOTENZ` stores `(operation, idempotenzschluessel)` and the resulting movement ID.
   Retries return the original movement instead of inserting a duplicate.
+- Direct changes to `ist_menge` are rejected when they do not equal the net linked movement
+  quantity; actual-use recording without movements remains allowed for direct-use
+  ingredients.
 - Integration tests demonstrate concurrent stock, version allocation, and batch-number
   allocation against real local PostgreSQL.
 
@@ -139,9 +146,11 @@ execute grant.
 - Linked movements are limited to `VERBRAUCH`, `KORREKTUR`, and `ENTSORGUNG`.
 - Actual use (`ist_menge`) is recorded independently of planned quantities. Direct-use
   ingredients may have `ist_menge` without movements. When inventory-supplied, the
-  reconciliation RPC requires it to equal the net issued amount.
+  reconciliation RPC and trigger require it to equal the net issued amount.
 - Multiple lots with different alpha/EBC values must use separate batch ingredient rows or
   an explicitly documented weighted value; no lot value is silently chosen.
+- Archived ingredients remain visible in history. There is no selection UI yet; future
+  pickers must filter `archiviert = false` for new selections by default.
 
 ## Equipment
 
@@ -193,8 +202,9 @@ execute grant.
 | Final-version protection                    | Trigger plus RPC                     |
 | Negative stock rejection                    | Row lock + trigger + RPC transaction |
 | Version/batch number allocation             | Parent row lock / sequence + UNIQUE  |
+| Draft-only new versions and released source | Insert/update triggers               |
 | Idempotent retries                          | `TB_IDEMPOTENZ` unique key           |
-| Actual-use reconciliation                   | RPC contract                         |
+| Actual-use reconciliation                   | Trigger + RPC contract               |
 | Access policy                               | RLS, grants, and RPC checks          |
 | Equipment assignment validation             | Trigger plus RPC/CRUD path           |
 
@@ -202,7 +212,7 @@ execute grant.
 
 - `bun run db:reset` applies the migration to a clean local database.
 - `bunx supabase db lint --local` reports no schema errors.
-- `bun run test:integration` runs 25 acceptance tests against local PostgreSQL.
+- `bun run test:integration` runs 27 acceptance tests against local PostgreSQL.
 - `bun run test` runs unit tests, including Zod validation.
 - The generated `lib/database.types.ts` is wired into browser/server/proxy clients.
 

@@ -354,6 +354,31 @@ describe("recipe lifecycle", () => {
     );
   });
 
+  it("requires new recipe versions to start as drafts", async () => {
+    const { rezeptId } = await createRecipe(unique("Entwurfspflicht"));
+    await expectSqlError(
+      sql(
+        `insert into public.tb_rezeptversion
+           (rezept_id, versionsnummer, name_snapshot, status, freigegeben_am)
+         values ($1, 2, 'Direkt freigegeben', 'FREIGEGEBEN', now())`,
+        [rezeptId],
+      ),
+      /Entwurf|check/i,
+    );
+  });
+
+  it("does not allow a batch from a draft recipe version", async () => {
+    const { versionId } = await createRecipe(unique("Entwurf Sud"));
+    await expectSqlError(
+      sql(
+        `insert into public.tb_sud (rezeptversion_id, sudnummer, name)
+         values ($1, $2, 'Direkter Sud')`,
+        [versionId, unique("SUD-DRAFT")],
+      ),
+      /freigegeben/i,
+    );
+  });
+
   it("rejects duplicate step positions, sudnummer, and equipment assignments", async () => {
     const { versionId } = await createRecipe(unique("Duplikatrezept"));
     await addStep(versionId, 1, "RAST", "Rast");
@@ -762,6 +787,14 @@ describe("batch copying and substitution", () => {
     expect(Number(unitChanged.geplante_menge)).toBe(100);
     expect(Number(unitChanged.alphasaeure_prozent)).toBe(3);
 
+    const newLot = await createLot(mlMalt);
+    await addStock(newLot, 200);
+    await move(newLot, "VERBRAUCH", -50, {
+      sudzutatId: zutat.id,
+      notizen: "Verbrauch des Ersatzrohstoffs",
+    });
+    expect(await stockOf(newLot)).toBe(150);
+
     const [step] = await sql<{ id: string }>(
       `select id from public.tb_sudschritt where sud_id = $1 order by position limit 1`,
       [batchId],
@@ -855,6 +888,17 @@ describe("inventory and actual use", () => {
       p_aus_lager: true,
     });
     expect(mismatch.error).not.toBeNull();
+
+    await expectSqlError(
+      sql(`update public.tb_sudzutat set ist_menge = 4 where id = $1`, [fixture.zutatId]),
+      /Nettolagerverbrauch|Ist-Menge/i,
+    );
+    await sql(`update public.tb_sudzutat set ist_menge = 3 where id = $1`, [fixture.zutatId]);
+    const [direct] = await sql<{ ist_menge: string }>(
+      `select ist_menge from public.tb_sudzutat where id = $1`,
+      [fixture.zutatId],
+    );
+    expect(Number(direct.ist_menge)).toBe(3);
   });
 
   it("supports direct-use ingredients without inventory movements", async () => {

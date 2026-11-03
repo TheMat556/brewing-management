@@ -129,7 +129,7 @@ the runner and path-alias configuration work.
   JWT secret are deliberately not placed in the application environment.
 - The brewing foundation is committed as ordered migrations under
   `supabase/migrations/` (enums, one per table, then shared logic).
-- `db reset` validates the tooling, Auth bootstrap, and the full brewing migration.
+- `db reset` validates the tooling, Auth bootstrap, and all brewing migrations.
 - Generated TypeScript database types are committed at `lib/database.types.ts` and wired
   into the browser, server, and proxy Supabase clients.
 
@@ -162,6 +162,8 @@ and SMTP is still required before production use.
   claims ownership with `zugang_beanspruchen()`. All domain access is RLS default-deny.
 - Movement writes are RPC-only for application users, append-only, row-locked per lot, and
   protected against negative stock. Idempotency keys prevent duplicate retried movements.
+- Trigger hardening rejects direct insertion of released versions, direct batches from draft
+  versions, and mismatched direct `ist_menge` changes.
 - Released recipe versions and their children are immutable; recipe/batch step ownership
   uses composite foreign keys.
 - Mixed ownership rules use triggers: ingredient snapshots, base-unit locking, lot
@@ -169,7 +171,7 @@ and SMTP is still required before production use.
   batch-step durations.
 - `lib/domain/validation.ts` provides Zod schemas for domain inputs. Generated database
   types are integrated into all Supabase clients.
-- Local acceptance suite: 25 PostgreSQL integration tests pass, plus unit tests for the
+- Local acceptance suite: 27 PostgreSQL integration tests pass, plus unit tests for the
   starter helper and domain validation.
 
 Detailed table names, constraints, RPC signatures, and semantics are documented in

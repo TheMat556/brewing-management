@@ -256,7 +256,7 @@ bun run test:integration
 bun run build
 ```
 
-Current coverage: unit tests for the starter helper and Zod domain validation, plus 25
+Current coverage: unit tests for the starter helper and Zod domain validation, plus 27
 PostgreSQL integration tests covering RLS, recipe/version lifecycle, copy semantics,
 substitution, inventory movements, corrections, idempotency, concurrency, equipment
 snapshots, archiving, and destructive-delete protection.
@@ -271,7 +271,7 @@ lib/database.types.ts Generated Supabase types
 lib/domain/           Zod validation and local PostgreSQL acceptance tests
 docs/                 Setup decisions and domain conventions
 proxy.ts              Next.js 16 proxy/session-refresh entry point
-supabase/migrations/  Brewing foundation migration
+supabase/migrations/  Ordered brewing migrations
 supabase/config.toml  Local Supabase configuration
 ```
 
