@@ -83,6 +83,16 @@ explicit `assert_berechtigt()` check. Execute privileges are revoked from public
 granted only to authenticated. Trigger functions are internal and have no application
 execute grant.
 
+### Application boundary
+
+The allowlisted owner has direct CRUD grants on most draft-editable tables, so the database
+also supports manual correction and draft editing. The RPCs are the supported workflow for
+operations that must be atomic: recipe creation/release, batch copying, inventory movements,
+substitution, and actual-use reconciliation. Direct multi-call writes can bypass workflow
+completeness (for example, creating a batch without copying all recipe rows); use the RPCs
+for normal application behavior. Database triggers still enforce release, snapshot,
+ownership, sign, and historical-integrity rules regardless of the write path.
+
 ## Concurrency and idempotency
 
 - Movement triggers lock the affected `tb_lagercharge` row with `FOR UPDATE`, then sum
@@ -143,7 +153,8 @@ execute grant.
 - Initial stock is a `ZUGANG` movement, not a mutable balance field.
 - Movements are append-only. Corrections are new `KORREKTUR` movements with notes.
 - `ZUGANG > 0`; `VERBRAUCH`/`ENTSORGUNG < 0`; `KORREKTUR` is either sign but not zero.
-- Linked movements are limited to `VERBRAUCH`, `KORREKTUR`, and `ENTSORGUNG`.
+- Linked movements are limited to `VERBRAUCH` and `KORREKTUR`; ordinary receipts and
+  disposal remain unlinked.
 - Actual use (`ist_menge`) is recorded independently of planned quantities. Direct-use
   ingredients may have `ist_menge` without movements. When inventory-supplied, the
   reconciliation RPC and trigger require it to equal the net issued amount.

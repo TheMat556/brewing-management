@@ -842,6 +842,15 @@ describe("inventory and actual use", () => {
     );
     expect(Number(netAfterConsumption)).toBe(5);
 
+    const linkedDisposal = await owner.client.rpc("lagerbewegung_erfassen", {
+      p_lagercharge_id: fixture.lot1,
+      p_typ: "ENTSORGUNG",
+      p_mengen_delta: -1,
+      p_sudzutat_id: fixture.zutatId,
+      p_idempotenzschluessel: unique("linked-disposal"),
+    });
+    expect(linkedDisposal.error).not.toBeNull();
+
     const correction = await move(fixture.lot1, "KORREKTUR", 2, {
       sudzutatId: fixture.zutatId,
       notizen: "Korrektur",
