@@ -1,5 +1,7 @@
 # Brewing Management App
 
+[![CI](https://github.com/TheMat556/brewing-management/actions/workflows/ci.yml/badge.svg)](https://github.com/TheMat556/brewing-management/actions/workflows/ci.yml)
+
 A Next.js + Supabase application scaffolded from the official
 [`with-supabase`](https://github.com/vercel/next.js/tree/canary/examples/with-supabase)
 starter, with the brewing data foundation from `TODO.md` implemented as ordered migrations.
@@ -318,9 +320,37 @@ integrity, plus 27 PostgreSQL integration tests covering RLS, recipe/version lif
 semantics, substitution, inventory movements, corrections, idempotency, concurrency, equipment
 snapshots, archiving, and destructive-delete protection.
 
+## CI/CD
+
+GitHub Actions workflows live in `.github/workflows/`:
+
+- `ci.yml` runs on pushes to `main` and on pull requests:
+  - Biome lint, format, and import checks
+  - TypeScript
+  - Unit tests
+  - Production build
+  - PostgreSQL integration tests against a local Supabase stack
+- `deploy-vercel.yml` runs after a successful `CI` workflow on `main` (or manually via
+  `workflow_dispatch`) and deploys the prebuilt output to Vercel.
+
+Required repository secrets for deployment:
+
+| Secret              | Purpose                     |
+| ------------------- | --------------------------- |
+| `VERCEL_TOKEN`      | Vercel CLI authentication   |
+| `VERCEL_ORG_ID`     | Vercel organization/team ID |
+| `VERCEL_PROJECT_ID` | Vercel project ID           |
+
+Configure the production Supabase URL and key in the Vercel project environment. Do not set
+`SUPABASE_INTERNAL_URL` on Vercel; it is only for code-server development.
+
+CodeRabbit is configured in `.coderabbit.yaml`. The configuration only takes effect after
+installing the CodeRabbit GitHub App for this repository.
+
 ## Project structure
 
 ```text
+.github/               CI, Vercel deployment, and CodeRabbit configuration
 app/                  App routes; brewing UI lives in app/(app)/ with auth outside it
 components/           UI primitives, app sidebar/navigation, auth, and brewing components
 lib/demo/             Typed demo fixtures and selectors; replaced when Supabase is wired

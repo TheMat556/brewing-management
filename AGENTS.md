@@ -51,7 +51,8 @@ bunx vitest run --config vitest.integration.config.ts -t "test name"
 - Run `bun run db:reset` after schema changes before integration tests.
 - Run `bun run build` only after checks/tests. **Never run `next build` while `next dev` is
   running**; both write `.next` and the build corrupts dev asset hashes.
-- There is no CI configuration; these local commands are the verification contract.
+- CI runs in `.github/workflows/ci.yml`; the local commands above remain the pre-commit and
+  debugging contract.
 
 ## Database
 
