@@ -93,6 +93,26 @@ Local Auth confirmation is enabled, and the local email rate limit is raised to 
 testing. Hosted deployments must use the hosted project's Auth settings and SMTP
 configuration; local settings must not be treated as production settings.
 
+### VS Code / code-server proxy
+
+code-server's `/proxy/3000/` route strips the path prefix. Next.js emits absolute
+`/_next/...` asset paths, so CSS and JavaScript fail unless a base path is configured.
+
+Use code-server's **`/absproxy/3000/`** route instead:
+
+```dotenv
+# .env.local
+NEXT_PUBLIC_BASE_PATH=/absproxy/3000
+```
+
+Then open `https://<your-code-server-host>/absproxy/3000/`. The base path is applied only
+during development; production builds ignore `NEXT_PUBLIC_BASE_PATH`. For normal localhost
+development, leave it blank and use `http://localhost:3000/`.
+
+Do not run `next build` while `next dev` is running. Both write to `.next`, and the build
+invalidates the dev server's asset hashes, producing 404s until the dev server is restarted
+with a clean `.next` directory.
+
 ## Scripts
 
 | Script                     | Purpose                                                   |
