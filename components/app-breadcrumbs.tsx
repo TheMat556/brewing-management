@@ -30,9 +30,16 @@ function labelFor(segment: string): string {
   return segmentLabels[segment] ?? (/^\d+$/.test(segment) ? "Detail" : segment);
 }
 
+function pathSegments(pathname: string): string[] {
+  const basePath = process.env.NEXT_PUBLIC_BASE_PATH;
+  const normalized =
+    basePath && pathname.startsWith(basePath) ? pathname.slice(basePath.length) : pathname;
+  return normalized.split("/").filter(Boolean);
+}
+
 export function AppBreadcrumbs() {
   const pathname = usePathname();
-  const segments = pathname.split("/").filter(Boolean);
+  const segments = pathSegments(pathname);
 
   if (segments.length === 0 || segments[0] === "dashboard") {
     return (
@@ -53,8 +60,8 @@ export function AppBreadcrumbs() {
 
   return (
     <Breadcrumb>
-      <BreadcrumbList>
-        <BreadcrumbItem className="hidden md:block">
+      <BreadcrumbList className="flex-nowrap overflow-hidden">
+        <BreadcrumbItem className="hidden md:inline-flex">
           <BreadcrumbLink asChild>
             <Link href="/dashboard">Übersicht</Link>
           </BreadcrumbLink>
@@ -64,9 +71,11 @@ export function AppBreadcrumbs() {
           return (
             <Fragment key={crumb.href}>
               <BreadcrumbSeparator className="hidden md:block" />
-              <BreadcrumbItem>
+              <BreadcrumbItem className={isLast ? "min-w-0" : "hidden md:inline-flex"}>
                 {isLast ? (
-                  <BreadcrumbPage>{crumb.label}</BreadcrumbPage>
+                  <BreadcrumbPage className="inline-block max-w-[55vw] truncate md:max-w-none">
+                    {crumb.label}
+                  </BreadcrumbPage>
                 ) : (
                   <BreadcrumbLink asChild>
                     <Link href={crumb.href}>{crumb.label}</Link>

@@ -51,19 +51,19 @@ export default function SudePage() {
           </CardDescription>
         </CardHeader>
         <CardContent>
-          <div className="overflow-x-auto">
+          <div className="w-full min-w-0 overflow-x-auto">
             <Table>
               <TableHeader>
                 <TableRow>
                   <TableHead>Sudnummer</TableHead>
                   <TableHead>Name</TableHead>
-                  <TableHead>Rezept / Version</TableHead>
-                  <TableHead>Braudatum</TableHead>
+                  <TableHead className="hidden lg:table-cell">Rezept / Version</TableHead>
+                  <TableHead className="hidden sm:table-cell">Braudatum</TableHead>
                   <TableHead>Status</TableHead>
                   <TableHead className="text-right">Ausschlagmenge</TableHead>
-                  <TableHead className="text-right">Stammwürze</TableHead>
-                  <TableHead className="text-right">Abgefüllt</TableHead>
-                  <TableHead />
+                  <TableHead className="hidden text-right md:table-cell">Stammwürze</TableHead>
+                  <TableHead className="hidden text-right lg:table-cell">Abgefüllt</TableHead>
+                  <TableHead className="hidden sm:table-cell" />
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -77,12 +77,17 @@ export default function SudePage() {
                           {sud.sudnummer}
                         </Link>
                       </TableCell>
-                      <TableCell>{sud.name}</TableCell>
-                      <TableCell className="text-muted-foreground">
+                      <TableCell>
+                        <div>{sud.name}</div>
+                        <div className="text-xs text-muted-foreground sm:hidden">
+                          {formatDate(sud.braudatum)}
+                        </div>
+                      </TableCell>
+                      <TableCell className="hidden text-muted-foreground lg:table-cell">
                         {rezept?.name ?? "—"}
                         {version ? ` · v${version.versionsnummer}` : ""}
                       </TableCell>
-                      <TableCell className="whitespace-nowrap text-muted-foreground">
+                      <TableCell className="hidden whitespace-nowrap text-muted-foreground sm:table-cell">
                         {formatDate(sud.braudatum)}
                       </TableCell>
                       <TableCell>
@@ -97,7 +102,7 @@ export default function SudePage() {
                           / {formatLiters(sud.ziel_ausschlagmenge_l)}
                         </span>
                       </TableCell>
-                      <TableCell className="whitespace-nowrap text-right tabular-nums">
+                      <TableCell className="hidden whitespace-nowrap text-right tabular-nums md:table-cell">
                         <span className="font-medium">
                           {formatPlato(sud.ist_stammwuerze_plato)}
                         </span>
@@ -106,10 +111,10 @@ export default function SudePage() {
                           / {formatPlato(sud.ziel_stammwuerze_plato)}
                         </span>
                       </TableCell>
-                      <TableCell className="text-right tabular-nums">
+                      <TableCell className="hidden text-right tabular-nums lg:table-cell">
                         {formatLiters(sud.abgefuellte_menge_l)}
                       </TableCell>
-                      <TableCell className="text-right">
+                      <TableCell className="hidden text-right sm:table-cell">
                         <Button variant="ghost" size="sm" asChild>
                           <Link href={`/sude/${sud.id}`}>Details</Link>
                         </Button>

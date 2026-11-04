@@ -106,9 +106,9 @@ export default function DashboardPage() {
         />
       </div>
 
-      <div className="grid gap-6 xl:grid-cols-[2fr_1fr]">
+      <div className="grid grid-cols-[minmax(0,1fr)] gap-6 xl:grid-cols-[minmax(0,2fr)_minmax(0,1fr)]">
         <Card>
-          <CardHeader className="flex flex-row items-start justify-between gap-4">
+          <CardHeader className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
             <div>
               <CardTitle>Letzte Lagerbewegungen</CardTitle>
               <CardDescription>Append-only Historie aus dem Demo-Datensatz.</CardDescription>
@@ -118,15 +118,15 @@ export default function DashboardPage() {
             </Button>
           </CardHeader>
           <CardContent>
-            <div className="overflow-x-auto">
+            <div className="w-full min-w-0 overflow-x-auto">
               <Table>
                 <TableHeader>
                   <TableRow>
-                    <TableHead>Zeitpunkt</TableHead>
+                    <TableHead className="hidden md:table-cell">Zeitpunkt</TableHead>
                     <TableHead>Typ</TableHead>
                     <TableHead>Rohstoff</TableHead>
                     <TableHead className="text-right">Menge</TableHead>
-                    <TableHead>Sud</TableHead>
+                    <TableHead className="hidden sm:table-cell">Sud</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
@@ -137,7 +137,7 @@ export default function DashboardPage() {
                     }
                     return (
                       <TableRow key={bewegung.id}>
-                        <TableCell className="whitespace-nowrap text-muted-foreground">
+                        <TableCell className="hidden whitespace-nowrap text-muted-foreground md:table-cell">
                           {formatDateTime(bewegung.zeitpunkt)}
                         </TableCell>
                         <TableCell>
@@ -158,7 +158,7 @@ export default function DashboardPage() {
                           {formatSignedNumber(bewegung.mengen_delta)}{" "}
                           {basiseinheitLabels[details.rohstoff.basiseinheit]}
                         </TableCell>
-                        <TableCell>
+                        <TableCell className="hidden sm:table-cell">
                           {details.sud ? (
                             <Link
                               href={`/sude/${details.sud.id}`}
@@ -179,7 +179,7 @@ export default function DashboardPage() {
           </CardContent>
         </Card>
 
-        <div className="space-y-6">
+        <div className="min-w-0 space-y-6">
           <Card>
             <CardHeader>
               <CardTitle>Bald ablaufend</CardTitle>
@@ -199,7 +199,7 @@ export default function DashboardPage() {
                       href={`/lager/chargen/${charge.id}`}
                       className="flex items-center justify-between gap-3 rounded-lg border p-3 text-sm transition-colors hover:bg-accent"
                     >
-                      <div>
+                      <div className="min-w-0">
                         <p className="font-medium">{rohstoff?.name ?? "Unbekannt"}</p>
                         <p className="text-xs text-muted-foreground">
                           MHD {formatDate(charge.mhd)} · Bestand{" "}
@@ -207,7 +207,7 @@ export default function DashboardPage() {
                           {rohstoff ? basiseinheitLabels[rohstoff.basiseinheit] : ""}
                         </p>
                       </div>
-                      <ArrowRight className="size-4 text-muted-foreground" />
+                      <ArrowRight className="size-4 shrink-0 text-muted-foreground" />
                     </Link>
                   );
                 })
@@ -227,7 +227,7 @@ export default function DashboardPage() {
                   href={`/sude/${sud.id}`}
                   className="flex items-center justify-between gap-3 rounded-lg border p-3 text-sm transition-colors hover:bg-accent"
                 >
-                  <div>
+                  <div className="min-w-0">
                     <p className="font-medium">
                       {sud.sudnummer} · {sud.name}
                     </p>
@@ -236,7 +236,9 @@ export default function DashboardPage() {
                       {formatPlato(sud.ziel_stammwuerze_plato)}
                     </p>
                   </div>
-                  <SudStatusBadge status={sud.status} />
+                  <div className="shrink-0">
+                    <SudStatusBadge status={sud.status} />
+                  </div>
                 </Link>
               ))}
             </CardContent>
@@ -264,7 +266,7 @@ export default function DashboardPage() {
                 href={`/rezepte/${rezept.id}`}
                 className="rounded-xl border p-4 transition-colors hover:bg-accent"
               >
-                <div className="flex items-start justify-between gap-2">
+                <div className="flex flex-wrap items-start justify-between gap-2">
                   <div>
                     <p className="font-medium">{rezept.name}</p>
                     <p className="text-xs text-muted-foreground">

@@ -42,7 +42,7 @@ export default function RezeptePage() {
           return (
             <Card key={rezept.id} className={rezept.archiviert ? "opacity-80" : undefined}>
               <CardHeader>
-                <div className="flex items-start justify-between gap-3">
+                <div className="flex flex-wrap items-start justify-between gap-3">
                   <div>
                     <CardTitle>
                       <Link href={`/rezepte/${rezept.id}`} className="hover:underline">

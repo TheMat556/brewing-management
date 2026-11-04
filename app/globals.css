@@ -124,6 +124,12 @@
   body {
     @apply bg-background text-foreground;
   }
+  [data-slot="card"] {
+    min-width: 0;
+  }
+  [data-slot="table-container"] {
+    max-width: 100%;
+  }
 }
 :root {
   --sidebar: hsl(0 0% 98%);

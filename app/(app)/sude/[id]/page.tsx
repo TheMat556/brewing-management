@@ -123,7 +123,7 @@ export default async function SudPage({ params }: { params: Promise<{ id: string
       </div>
 
       <Tabs defaultValue="uebersicht" className="space-y-4">
-        <TabsList className="h-auto flex-wrap justify-start">
+        <TabsList className="h-auto w-full flex-wrap justify-start sm:w-fit">
           <TabsTrigger value="uebersicht">Übersicht</TabsTrigger>
           <TabsTrigger value="schritte">Schritte</TabsTrigger>
           <TabsTrigger value="zutaten">Zutaten</TabsTrigger>
@@ -224,7 +224,7 @@ export default async function SudPage({ params }: { params: Promise<{ id: string
               </CardDescription>
             </CardHeader>
             <CardContent>
-              <div className="overflow-x-auto">
+              <div className="w-full min-w-0 overflow-x-auto">
                 <Table>
                   <TableHeader>
                     <TableRow>
@@ -233,8 +233,8 @@ export default async function SudPage({ params }: { params: Promise<{ id: string
                       <TableHead>Name</TableHead>
                       <TableHead className="text-right">Temperatur</TableHead>
                       <TableHead className="text-right">Dauer</TableHead>
-                      <TableHead>Start / Ende</TableHead>
-                      <TableHead>Notiz</TableHead>
+                      <TableHead className="hidden lg:table-cell">Start / Ende</TableHead>
+                      <TableHead className="hidden xl:table-cell">Notiz</TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>
@@ -247,7 +247,7 @@ export default async function SudPage({ params }: { params: Promise<{ id: string
                         <TableCell>
                           <div className="font-medium">{schritt.name}</div>
                           {schritt.anweisung ? (
-                            <div className="max-w-72 text-xs text-muted-foreground">
+                            <div className="max-w-72 whitespace-normal text-xs text-muted-foreground">
                               {schritt.anweisung}
                             </div>
                           ) : null}
@@ -271,11 +271,11 @@ export default async function SudPage({ params }: { params: Promise<{ id: string
                             Ziel {formatMinutes(schritt.ziel_dauer_min)}
                           </div>
                         </TableCell>
-                        <TableCell className="whitespace-nowrap text-xs text-muted-foreground">
+                        <TableCell className="hidden whitespace-nowrap text-xs text-muted-foreground lg:table-cell">
                           <div>{formatDateTime(schritt.gestartet_am)}</div>
                           <div>{formatDateTime(schritt.beendet_am)}</div>
                         </TableCell>
-                        <TableCell className="max-w-56 text-muted-foreground">
+                        <TableCell className="hidden max-w-56 whitespace-normal text-muted-foreground xl:table-cell">
                           {schritt.notizen ?? "—"}
                         </TableCell>
                       </TableRow>
@@ -289,7 +289,7 @@ export default async function SudPage({ params }: { params: Promise<{ id: string
 
         <TabsContent value="zutaten">
           <Card>
-            <CardHeader className="flex flex-row items-start justify-between gap-4">
+            <CardHeader className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
               <div>
                 <CardTitle>Zutaten</CardTitle>
                 <CardDescription>
@@ -303,16 +303,16 @@ export default async function SudPage({ params }: { params: Promise<{ id: string
               </Button>
             </CardHeader>
             <CardContent>
-              <div className="overflow-x-auto">
+              <div className="w-full min-w-0 overflow-x-auto">
                 <Table>
                   <TableHeader>
                     <TableRow>
                       <TableHead>Rohstoff</TableHead>
                       <TableHead className="text-right">Geplant</TableHead>
                       <TableHead className="text-right">Ist</TableHead>
-                      <TableHead>Alpha / EBC</TableHead>
-                      <TableHead className="text-right">Zugabe</TableHead>
-                      <TableHead>Lagerbewegungen</TableHead>
+                      <TableHead className="hidden sm:table-cell">Alpha / EBC</TableHead>
+                      <TableHead className="hidden text-right md:table-cell">Zugabe</TableHead>
+                      <TableHead className="hidden lg:table-cell">Lagerbewegungen</TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>
@@ -336,17 +336,17 @@ export default async function SudPage({ params }: { params: Promise<{ id: string
                           <TableCell className="text-right font-medium tabular-nums">
                             {formatQuantity(zutat.ist_menge, einheit)}
                           </TableCell>
-                          <TableCell className="whitespace-nowrap text-muted-foreground">
+                          <TableCell className="hidden whitespace-nowrap text-muted-foreground sm:table-cell">
                             {zutat.alphasaeure_prozent !== null
                               ? formatPercent(zutat.alphasaeure_prozent)
                               : zutat.ebc !== null
                                 ? `EBC ${formatNumber(zutat.ebc)}`
                                 : "—"}
                           </TableCell>
-                          <TableCell className="text-right text-muted-foreground">
+                          <TableCell className="hidden text-right text-muted-foreground md:table-cell">
                             {zugabeLabel(zutat, schritt)}
                           </TableCell>
-                          <TableCell>
+                          <TableCell className="hidden lg:table-cell">
                             {zugehoerigeBewegungen.length === 0 ? (
                               <span className="text-xs text-muted-foreground">Keine Bewegung</span>
                             ) : (
@@ -383,7 +383,7 @@ export default async function SudPage({ params }: { params: Promise<{ id: string
 
         <TabsContent value="geraete">
           <Card>
-            <CardHeader className="flex flex-row items-start justify-between gap-4">
+            <CardHeader className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
               <div>
                 <CardTitle>Geräte</CardTitle>
                 <CardDescription>
@@ -396,15 +396,17 @@ export default async function SudPage({ params }: { params: Promise<{ id: string
               </Button>
             </CardHeader>
             <CardContent>
-              <div className="overflow-x-auto">
+              <div className="w-full min-w-0 overflow-x-auto">
                 <Table>
                   <TableHeader>
                     <TableRow>
                       <TableHead>Gerät</TableHead>
                       <TableHead className="text-right">Menge</TableHead>
                       <TableHead>LOB genutzt</TableHead>
-                      <TableHead className="text-right">LOB-Menge / Stück</TableHead>
-                      <TableHead>Notiz</TableHead>
+                      <TableHead className="hidden text-right sm:table-cell">
+                        LOB-Menge / Stück
+                      </TableHead>
+                      <TableHead className="hidden lg:table-cell">Notiz</TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>
@@ -423,10 +425,10 @@ export default async function SudPage({ params }: { params: Promise<{ id: string
                             <span className="text-sm text-muted-foreground">Nein</span>
                           )}
                         </TableCell>
-                        <TableCell className="text-right tabular-nums">
+                        <TableCell className="hidden text-right tabular-nums sm:table-cell">
                           {formatLiters(eintrag.lob_menge_l_snapshot)}
                         </TableCell>
-                        <TableCell className="text-muted-foreground">
+                        <TableCell className="hidden text-muted-foreground lg:table-cell">
                           {eintrag.notizen ?? "—"}
                         </TableCell>
                       </TableRow>
@@ -453,7 +455,7 @@ export default async function SudPage({ params }: { params: Promise<{ id: string
                   Für diesen Sud sind noch keine Lagerbewegungen erfasst.
                 </p>
               ) : (
-                <div className="overflow-x-auto">
+                <div className="w-full min-w-0 overflow-x-auto">
                   <Table>
                     <TableHeader>
                       <TableRow>
@@ -461,7 +463,7 @@ export default async function SudPage({ params }: { params: Promise<{ id: string
                         <TableHead>Typ</TableHead>
                         <TableHead>Charge</TableHead>
                         <TableHead className="text-right">Delta</TableHead>
-                        <TableHead>Notiz</TableHead>
+                        <TableHead className="hidden lg:table-cell">Notiz</TableHead>
                       </TableRow>
                     </TableHeader>
                     <TableBody>
@@ -491,7 +493,7 @@ export default async function SudPage({ params }: { params: Promise<{ id: string
                               {formatSignedNumber(bewegung.mengen_delta)}{" "}
                               {basiseinheitLabels[details.rohstoff.basiseinheit]}
                             </TableCell>
-                            <TableCell className="text-muted-foreground">
+                            <TableCell className="hidden text-muted-foreground lg:table-cell">
                               {bewegung.notizen ?? "—"}
                             </TableCell>
                           </TableRow>

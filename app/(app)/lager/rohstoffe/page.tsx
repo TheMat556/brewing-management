@@ -61,17 +61,17 @@ export default function RohstoffePage() {
           </CardDescription>
         </CardHeader>
         <CardContent>
-          <div className="overflow-x-auto">
+          <div className="w-full min-w-0 overflow-x-auto">
             <Table>
               <TableHeader>
                 <TableRow>
                   <TableHead>Name</TableHead>
                   <TableHead>Kategorie</TableHead>
-                  <TableHead>Basiseinheit</TableHead>
-                  <TableHead className="text-right">Chargen</TableHead>
+                  <TableHead className="hidden sm:table-cell">Basiseinheit</TableHead>
+                  <TableHead className="hidden text-right sm:table-cell">Chargen</TableHead>
                   <TableHead className="text-right">Gesamtbestand</TableHead>
-                  <TableHead className="text-right">Rezeptzutaten</TableHead>
-                  <TableHead className="text-right">Sudzutaten</TableHead>
+                  <TableHead className="hidden text-right lg:table-cell">Rezeptzutaten</TableHead>
+                  <TableHead className="hidden text-right lg:table-cell">Sudzutaten</TableHead>
                   <TableHead>Status</TableHead>
                 </TableRow>
               </TableHeader>
@@ -90,25 +90,32 @@ export default function RohstoffePage() {
                       <TableCell>
                         <div className="font-medium">{rohstoff.name}</div>
                         {rohstoff.notizen ? (
-                          <div className="max-w-72 text-xs text-muted-foreground">
+                          <div className="max-w-72 whitespace-normal text-xs text-muted-foreground">
                             {rohstoff.notizen}
                           </div>
                         ) : null}
+                        <div className="text-xs text-muted-foreground sm:hidden">
+                          {chargen.length} Chargen
+                        </div>
                       </TableCell>
                       <TableCell>
                         <KategorieBadge kategorie={rohstoff.kategorie} />
                       </TableCell>
-                      <TableCell className="text-muted-foreground">
+                      <TableCell className="hidden text-muted-foreground sm:table-cell">
                         {basiseinheitLabels[rohstoff.basiseinheit]}
                       </TableCell>
-                      <TableCell className="text-right tabular-nums">{chargen.length}</TableCell>
+                      <TableCell className="hidden text-right tabular-nums sm:table-cell">
+                        {chargen.length}
+                      </TableCell>
                       <TableCell className="text-right font-medium tabular-nums">
                         {formatQuantity(bestand, basiseinheitLabels[rohstoff.basiseinheit])}
                       </TableCell>
-                      <TableCell className="text-right tabular-nums">
+                      <TableCell className="hidden text-right tabular-nums lg:table-cell">
                         {rezeptVerwendungen}
                       </TableCell>
-                      <TableCell className="text-right tabular-nums">{sudVerwendungen}</TableCell>
+                      <TableCell className="hidden text-right tabular-nums lg:table-cell">
+                        {sudVerwendungen}
+                      </TableCell>
                       <TableCell>
                         {rohstoff.archiviert ? (
                           <ArchivBadge />

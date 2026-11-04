@@ -54,16 +54,16 @@ export default function LagerbewegungenPage() {
           </CardDescription>
         </CardHeader>
         <CardContent>
-          <div className="overflow-x-auto">
+          <div className="w-full min-w-0 overflow-x-auto">
             <Table>
               <TableHeader>
                 <TableRow>
-                  <TableHead>Zeitpunkt</TableHead>
+                  <TableHead className="hidden sm:table-cell">Zeitpunkt</TableHead>
                   <TableHead>Typ</TableHead>
                   <TableHead>Rohstoff / Charge</TableHead>
                   <TableHead className="text-right">Delta</TableHead>
-                  <TableHead>Sud</TableHead>
-                  <TableHead>Notiz</TableHead>
+                  <TableHead className="hidden md:table-cell">Sud</TableHead>
+                  <TableHead className="hidden lg:table-cell">Notiz</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -74,7 +74,7 @@ export default function LagerbewegungenPage() {
                   }
                   return (
                     <TableRow key={bewegung.id}>
-                      <TableCell className="whitespace-nowrap text-muted-foreground">
+                      <TableCell className="hidden whitespace-nowrap text-muted-foreground sm:table-cell">
                         {formatDateTime(bewegung.zeitpunkt)}
                       </TableCell>
                       <TableCell>
@@ -95,7 +95,7 @@ export default function LagerbewegungenPage() {
                         {formatSignedNumber(bewegung.mengen_delta)}{" "}
                         {basiseinheitLabels[details.rohstoff.basiseinheit]}
                       </TableCell>
-                      <TableCell>
+                      <TableCell className="hidden md:table-cell">
                         {details.sud ? (
                           <Link
                             href={`/sude/${details.sud.id}`}
@@ -107,7 +107,7 @@ export default function LagerbewegungenPage() {
                           <span className="text-muted-foreground">—</span>
                         )}
                       </TableCell>
-                      <TableCell className="max-w-72 text-muted-foreground">
+                      <TableCell className="hidden max-w-72 whitespace-normal text-muted-foreground lg:table-cell">
                         {bewegung.notizen ?? "—"}
                       </TableCell>
                     </TableRow>

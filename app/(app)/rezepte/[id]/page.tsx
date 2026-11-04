@@ -104,7 +104,7 @@ export default async function RezeptPage({ params }: { params: Promise<{ id: str
       </div>
 
       <Tabs defaultValue={String(versionen[0].id)} className="space-y-4">
-        <TabsList className="h-auto flex-wrap justify-start">
+        <TabsList className="h-auto w-full flex-wrap justify-start sm:w-fit">
           {versionen.map((version) => (
             <TabsTrigger key={version.id} value={String(version.id)} className="gap-2">
               v{version.versionsnummer}
@@ -209,22 +209,24 @@ export default async function RezeptPage({ params }: { params: Promise<{ id: str
                 }))}
               />
 
-              <div className="grid gap-6 xl:grid-cols-[1fr_1.4fr]">
+              <div className="grid grid-cols-[minmax(0,1fr)] gap-6 xl:grid-cols-[minmax(0,1fr)_minmax(0,1.4fr)]">
                 <Card>
                   <CardHeader>
                     <CardTitle>Zutaten</CardTitle>
                     <CardDescription>Mengen und Rohstoff-Snapshots dieser Version.</CardDescription>
                   </CardHeader>
                   <CardContent>
-                    <div className="overflow-x-auto">
+                    <div className="w-full min-w-0 overflow-x-auto">
                       <Table>
                         <TableHeader>
                           <TableRow>
                             <TableHead>Rohstoff</TableHead>
                             <TableHead className="text-right">Menge</TableHead>
                             <TableHead>Schritt</TableHead>
-                            <TableHead>Alpha / EBC</TableHead>
-                            <TableHead className="text-right">Zugabe</TableHead>
+                            <TableHead className="hidden sm:table-cell">Alpha / EBC</TableHead>
+                            <TableHead className="hidden text-right md:table-cell">
+                              Zugabe
+                            </TableHead>
                           </TableRow>
                         </TableHeader>
                         <TableBody>
@@ -244,14 +246,14 @@ export default async function RezeptPage({ params }: { params: Promise<{ id: str
                                 <TableCell className="text-muted-foreground">
                                   {schritt ? `P${schritt.position} ${schritt.name}` : "—"}
                                 </TableCell>
-                                <TableCell className="whitespace-nowrap text-muted-foreground">
+                                <TableCell className="hidden whitespace-nowrap text-muted-foreground sm:table-cell">
                                   {zutat.alphasaeure_prozent !== null
                                     ? formatPercent(zutat.alphasaeure_prozent)
                                     : zutat.ebc !== null
                                       ? `EBC ${formatNumber(zutat.ebc)}`
                                       : "—"}
                                 </TableCell>
-                                <TableCell className="text-right text-muted-foreground">
+                                <TableCell className="hidden text-right text-muted-foreground md:table-cell">
                                   {zugabeLabel(zutat, schritt)}
                                 </TableCell>
                               </TableRow>
@@ -271,7 +273,7 @@ export default async function RezeptPage({ params }: { params: Promise<{ id: str
                     </CardDescription>
                   </CardHeader>
                   <CardContent>
-                    <div className="overflow-x-auto">
+                    <div className="w-full min-w-0 overflow-x-auto">
                       <Table>
                         <TableHeader>
                           <TableRow>
@@ -280,7 +282,9 @@ export default async function RezeptPage({ params }: { params: Promise<{ id: str
                             <TableHead>Name</TableHead>
                             <TableHead className="text-right">Temperatur</TableHead>
                             <TableHead className="text-right">Dauer</TableHead>
-                            <TableHead className="text-right">Wasser</TableHead>
+                            <TableHead className="hidden text-right lg:table-cell">
+                              Wasser
+                            </TableHead>
                           </TableRow>
                         </TableHeader>
                         <TableBody>
@@ -295,7 +299,7 @@ export default async function RezeptPage({ params }: { params: Promise<{ id: str
                               <TableCell>
                                 <div className="font-medium">{schritt.name}</div>
                                 {schritt.anweisung ? (
-                                  <div className="max-w-72 text-xs text-muted-foreground">
+                                  <div className="max-w-72 whitespace-normal text-xs text-muted-foreground">
                                     {schritt.anweisung}
                                   </div>
                                 ) : null}
@@ -308,7 +312,7 @@ export default async function RezeptPage({ params }: { params: Promise<{ id: str
                               <TableCell className="text-right tabular-nums">
                                 {formatMinutes(schritt.dauer_min)}
                               </TableCell>
-                              <TableCell className="text-right tabular-nums">
+                              <TableCell className="hidden text-right tabular-nums lg:table-cell">
                                 {formatLiters(schritt.wassermenge_l)}
                               </TableCell>
                             </TableRow>

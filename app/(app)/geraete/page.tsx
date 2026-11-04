@@ -52,17 +52,19 @@ export default function GeraetePage() {
           </CardDescription>
         </CardHeader>
         <CardContent>
-          <div className="overflow-x-auto">
+          <div className="w-full min-w-0 overflow-x-auto">
             <Table>
               <TableHeader>
                 <TableRow>
                   <TableHead>Name</TableHead>
                   <TableHead className="text-right">Menge</TableHead>
                   <TableHead>LOB-fähig</TableHead>
-                  <TableHead className="text-right">LOB-Menge / Stück</TableHead>
-                  <TableHead className="text-right">Einsätze</TableHead>
+                  <TableHead className="hidden text-right md:table-cell">
+                    LOB-Menge / Stück
+                  </TableHead>
+                  <TableHead className="hidden text-right sm:table-cell">Einsätze</TableHead>
                   <TableHead>Status</TableHead>
-                  <TableHead />
+                  <TableHead className="hidden sm:table-cell" />
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -78,7 +80,7 @@ export default function GeraetePage() {
                           {geraet.name}
                         </Link>
                         {geraet.notizen ? (
-                          <div className="max-w-72 text-xs text-muted-foreground">
+                          <div className="max-w-72 whitespace-normal text-xs text-muted-foreground">
                             {geraet.notizen}
                           </div>
                         ) : null}
@@ -91,10 +93,12 @@ export default function GeraetePage() {
                           <span className="text-sm text-muted-foreground">Nein</span>
                         )}
                       </TableCell>
-                      <TableCell className="text-right tabular-nums">
+                      <TableCell className="hidden text-right tabular-nums md:table-cell">
                         {formatLiters(geraet.lob_menge_l)}
                       </TableCell>
-                      <TableCell className="text-right tabular-nums">{historie.length}</TableCell>
+                      <TableCell className="hidden text-right tabular-nums sm:table-cell">
+                        {historie.length}
+                      </TableCell>
                       <TableCell>
                         {geraet.archiviert ? (
                           <ArchivBadge />
@@ -102,7 +106,7 @@ export default function GeraetePage() {
                           <span className="text-sm text-muted-foreground">Aktiv</span>
                         )}
                       </TableCell>
-                      <TableCell className="text-right">
+                      <TableCell className="hidden text-right sm:table-cell">
                         <Button variant="ghost" size="sm" asChild>
                           <Link href={`/geraete/${geraet.id}`}>Details</Link>
                         </Button>

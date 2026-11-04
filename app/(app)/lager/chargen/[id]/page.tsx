@@ -118,7 +118,7 @@ export default async function LagerchargePage({ params }: { params: Promise<{ id
         </Card>
       </div>
 
-      <div className="grid gap-6 xl:grid-cols-[1fr_2fr]">
+      <div className="grid grid-cols-[minmax(0,1fr)] gap-6 xl:grid-cols-[minmax(0,1fr)_minmax(0,2fr)]">
         <Card>
           <CardHeader>
             <CardTitle>Chargenwerte</CardTitle>
@@ -158,15 +158,15 @@ export default async function LagerchargePage({ params }: { params: Promise<{ id
             </CardDescription>
           </CardHeader>
           <CardContent>
-            <div className="overflow-x-auto">
+            <div className="w-full min-w-0 overflow-x-auto">
               <Table>
                 <TableHeader>
                   <TableRow>
                     <TableHead>Zeitpunkt</TableHead>
                     <TableHead>Typ</TableHead>
                     <TableHead className="text-right">Delta</TableHead>
-                    <TableHead>Sud</TableHead>
-                    <TableHead>Notiz</TableHead>
+                    <TableHead className="hidden sm:table-cell">Sud</TableHead>
+                    <TableHead className="hidden lg:table-cell">Notiz</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
@@ -183,7 +183,7 @@ export default async function LagerchargePage({ params }: { params: Promise<{ id
                         <TableCell className="text-right font-medium tabular-nums">
                           {formatSignedNumber(bewegung.mengen_delta)} {einheit}
                         </TableCell>
-                        <TableCell>
+                        <TableCell className="hidden sm:table-cell">
                           {details?.sud ? (
                             <Link
                               href={`/sude/${details.sud.id}`}
@@ -195,7 +195,7 @@ export default async function LagerchargePage({ params }: { params: Promise<{ id
                             <span className="text-muted-foreground">—</span>
                           )}
                         </TableCell>
-                        <TableCell className="max-w-64 text-muted-foreground">
+                        <TableCell className="hidden max-w-64 whitespace-normal text-muted-foreground lg:table-cell">
                           {bewegung.notizen ?? "—"}
                         </TableCell>
                       </TableRow>

@@ -91,19 +91,19 @@ export default function LagerPage() {
           </CardDescription>
         </CardHeader>
         <CardContent>
-          <div className="overflow-x-auto">
+          <div className="w-full min-w-0 overflow-x-auto">
             <Table>
               <TableHeader>
                 <TableRow>
                   <TableHead>Rohstoff</TableHead>
-                  <TableHead>Kategorie</TableHead>
-                  <TableHead>Charge</TableHead>
-                  <TableHead>Lieferdatum</TableHead>
-                  <TableHead>MHD</TableHead>
+                  <TableHead className="hidden md:table-cell">Kategorie</TableHead>
+                  <TableHead className="hidden sm:table-cell">Charge</TableHead>
+                  <TableHead className="hidden lg:table-cell">Lieferdatum</TableHead>
+                  <TableHead className="hidden sm:table-cell">MHD</TableHead>
                   <TableHead className="text-right">Bestand</TableHead>
-                  <TableHead>Alpha / EBC</TableHead>
+                  <TableHead className="hidden md:table-cell">Alpha / EBC</TableHead>
                   <TableHead>Status</TableHead>
-                  <TableHead />
+                  <TableHead className="hidden sm:table-cell" />
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -125,23 +125,27 @@ export default function LagerPage() {
                         {rohstoff.archiviert ? (
                           <span className="ml-2 text-xs text-muted-foreground">archiviert</span>
                         ) : null}
+                        <div className="mt-1 text-xs text-muted-foreground sm:hidden">
+                          {charge.lieferanten_chargennummer ?? "Keine Charge"} · MHD{" "}
+                          {formatDate(charge.mhd)}
+                        </div>
                       </TableCell>
-                      <TableCell>
+                      <TableCell className="hidden md:table-cell">
                         <KategorieBadge kategorie={rohstoff.kategorie} />
                       </TableCell>
-                      <TableCell className="text-muted-foreground">
+                      <TableCell className="hidden text-muted-foreground sm:table-cell">
                         {charge.lieferanten_chargennummer ?? "—"}
                       </TableCell>
-                      <TableCell className="whitespace-nowrap text-muted-foreground">
+                      <TableCell className="hidden whitespace-nowrap text-muted-foreground lg:table-cell">
                         {formatDate(charge.lieferdatum)}
                       </TableCell>
-                      <TableCell className="whitespace-nowrap text-muted-foreground">
+                      <TableCell className="hidden whitespace-nowrap text-muted-foreground sm:table-cell">
                         {formatDate(charge.mhd)}
                       </TableCell>
                       <TableCell className="text-right font-medium tabular-nums">
                         {formatQuantity(bestand, basiseinheitLabels[rohstoff.basiseinheit])}
                       </TableCell>
-                      <TableCell className="whitespace-nowrap text-muted-foreground">
+                      <TableCell className="hidden whitespace-nowrap text-muted-foreground md:table-cell">
                         {charge.alphasaeure_prozent !== null
                           ? `Alpha ${formatPercent(charge.alphasaeure_prozent)}`
                           : charge.ebc !== null
@@ -151,7 +155,7 @@ export default function LagerPage() {
                       <TableCell>
                         <BestandsBadge chargeId={charge.id} mhd={charge.mhd} />
                       </TableCell>
-                      <TableCell className="text-right">
+                      <TableCell className="hidden text-right sm:table-cell">
                         <Button variant="ghost" size="sm" asChild>
                           <Link href={`/lager/chargen/${charge.id}`}>Details</Link>
                         </Button>

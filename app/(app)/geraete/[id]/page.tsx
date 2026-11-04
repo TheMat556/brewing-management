@@ -117,7 +117,7 @@ export default async function GeraetPage({ params }: { params: Promise<{ id: str
               Dieses Gerät wurde noch keinem Sud zugewiesen.
             </p>
           ) : (
-            <div className="overflow-x-auto">
+            <div className="w-full min-w-0 overflow-x-auto">
               <Table>
                 <TableHeader>
                   <TableRow>
@@ -126,8 +126,8 @@ export default async function GeraetPage({ params }: { params: Promise<{ id: str
                     <TableHead>Status</TableHead>
                     <TableHead className="text-right">Zugewiesen</TableHead>
                     <TableHead>LOB genutzt</TableHead>
-                    <TableHead className="text-right">LOB-Snapshot</TableHead>
-                    <TableHead>Notiz</TableHead>
+                    <TableHead className="hidden text-right md:table-cell">LOB-Snapshot</TableHead>
+                    <TableHead className="hidden lg:table-cell">Notiz</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
@@ -154,10 +154,10 @@ export default async function GeraetPage({ params }: { params: Promise<{ id: str
                           <span className="text-sm text-muted-foreground">Nein</span>
                         )}
                       </TableCell>
-                      <TableCell className="text-right tabular-nums">
+                      <TableCell className="hidden text-right tabular-nums md:table-cell">
                         {formatLiters(eintrag.lob_menge_l_snapshot)}
                       </TableCell>
-                      <TableCell className="text-muted-foreground">
+                      <TableCell className="hidden text-muted-foreground lg:table-cell">
                         {eintrag.notizen ?? "—"}
                       </TableCell>
                     </TableRow>

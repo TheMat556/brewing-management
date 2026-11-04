@@ -38,7 +38,7 @@ export default function ZugangPage() {
         }
       />
 
-      <div className="grid gap-4 lg:grid-cols-[1.2fr_2fr]">
+      <div className="grid grid-cols-[minmax(0,1fr)] gap-4 lg:grid-cols-[minmax(0,1.2fr)_minmax(0,2fr)]">
         <Card>
           <CardHeader>
             <CardTitle>Eigentümer</CardTitle>
@@ -74,14 +74,14 @@ export default function ZugangPage() {
             </CardDescription>
           </CardHeader>
           <CardContent>
-            <div className="overflow-x-auto">
+            <div className="w-full min-w-0 overflow-x-auto">
               <Table>
                 <TableHeader>
                   <TableRow>
                     <TableHead>Name</TableHead>
-                    <TableHead>E-Mail</TableHead>
+                    <TableHead className="hidden md:table-cell">E-Mail</TableHead>
                     <TableHead>Rolle</TableHead>
-                    <TableHead>Freigeschaltet am</TableHead>
+                    <TableHead className="hidden sm:table-cell">Freigeschaltet am</TableHead>
                     <TableHead>Status</TableHead>
                   </TableRow>
                 </TableHeader>
@@ -89,13 +89,15 @@ export default function ZugangPage() {
                   {demoBenutzer.map((benutzer) => (
                     <TableRow key={benutzer.benutzer_id}>
                       <TableCell className="font-medium">{benutzer.name}</TableCell>
-                      <TableCell className="text-muted-foreground">{benutzer.email}</TableCell>
+                      <TableCell className="hidden text-muted-foreground md:table-cell">
+                        {benutzer.email}
+                      </TableCell>
                       <TableCell>
                         <Badge variant={benutzer.rolle === "Eigentümer" ? "default" : "outline"}>
                           {benutzer.rolle}
                         </Badge>
                       </TableCell>
-                      <TableCell className="whitespace-nowrap text-muted-foreground">
+                      <TableCell className="hidden whitespace-nowrap text-muted-foreground sm:table-cell">
                         {formatDate(benutzer.erstellt_am)}
                       </TableCell>
                       <TableCell>
