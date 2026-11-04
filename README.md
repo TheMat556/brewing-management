@@ -330,8 +330,11 @@ GitHub Actions workflows live in `.github/workflows/`:
   - Unit tests
   - Production build
   - PostgreSQL integration tests against a local Supabase stack
-- `deploy-vercel.yml` runs after a successful `CI` workflow on `main` (or manually via
-  `workflow_dispatch`) and deploys the prebuilt output to Vercel.
+- `deploy-vercel.yml` deploys Vercel:
+  - feature branches matching `feat/**` create **preview** deployments on push
+  - after a successful `CI` workflow on `main`, a **production** deployment runs
+  - `workflow_dispatch` can target preview or production manually once the workflow
+    exists on the default branch
 
 Required repository secrets for deployment:
 
