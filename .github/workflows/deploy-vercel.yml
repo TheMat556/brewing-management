@@ -1,6 +1,9 @@
 name: Deploy to Vercel
 
 on:
+  push:
+    branches:
+      - "feat/**"
   workflow_run:
     workflows:
       - CI
@@ -23,22 +26,22 @@ permissions:
   contents: read
 
 concurrency:
-  group: vercel-${{ github.ref }}-${{ inputs.target || 'production' }}
+  group: vercel-${{ github.ref }}-${{ github.event_name == 'workflow_run' && 'production' || inputs.target || 'preview' }}
   cancel-in-progress: false
 
 env:
   VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
   VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
   VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID }}
-  DEPLOY_TARGET: ${{ github.event_name == 'workflow_run' && 'production' || inputs.target }}
+  DEPLOY_TARGET: ${{ github.event_name == 'workflow_run' && 'production' || inputs.target || 'preview' }}
 
 jobs:
   deploy:
     name: Deploy to Vercel
-    if: github.event_name == 'workflow_dispatch' || github.event.workflow_run.conclusion == 'success'
+    if: github.event_name == 'push' || github.event_name == 'workflow_dispatch' || github.event.workflow_run.conclusion == 'success'
     runs-on: ubuntu-latest
     timeout-minutes: 20
-    environment: ${{ github.event_name == 'workflow_run' && 'production' || inputs.target }}
+    environment: ${{ github.event_name == 'workflow_run' && 'production' || inputs.target || 'preview' }}
 
     steps:
       - name: Checkout
