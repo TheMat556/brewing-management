@@ -4,6 +4,7 @@ import Link from "next/link";
 import { PageHeader } from "@/components/brewing/page-header";
 import { StatCard } from "@/components/brewing/stat-card";
 import { ArchivBadge } from "@/components/brewing/status-badge";
+import { DemoActionButton } from "@/components/demo/demo-action-dialog";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -29,10 +30,60 @@ export default function GeraetePage() {
         title="Geräte"
         description="Geräte sind Gruppen gleichwertiger Gegenstände, keine einzelnen Seriennummern. Einsätze werden pro Sud mit Mengen- und LOB-Snapshots festgehalten."
         actions={
-          <Button disabled title="Im Demo-Modus nicht verfügbar">
-            <Plus />
-            Gerät anlegen
-          </Button>
+          <DemoActionButton
+            label="Gerät anlegen"
+            title="Gerätegruppe anlegen"
+            description="Eine Gruppe gleichwertiger Gegenstände erfassen."
+            submitLabel="Gerät vorbereiten"
+            icon={<Plus />}
+            successMessage="Demo-Gerät vorbereitet."
+            fields={[
+              {
+                kind: "text",
+                name: "name",
+                label: "Name",
+                placeholder: "z. B. 30-Liter-Gärtank",
+                required: true,
+              },
+              {
+                kind: "number",
+                name: "menge",
+                label: "Menge",
+                required: true,
+                min: 0,
+                defaultValue: "1",
+              },
+              {
+                kind: "select",
+                name: "lob_faehig",
+                label: "LOB-fähig",
+                options: [
+                  { value: "nein", label: "Nein" },
+                  { value: "ja", label: "Ja" },
+                ],
+                defaultValue: "nein",
+              },
+              {
+                kind: "number",
+                name: "lob_menge",
+                label: "LOB-Menge pro Stück (L)",
+                placeholder: "Optional",
+                min: 0,
+                step: "0.1",
+              },
+              { kind: "textarea", name: "notizen", label: "Notizen", placeholder: "Optional" },
+              {
+                kind: "select",
+                name: "archiviert",
+                label: "Archiviert",
+                defaultValue: "nein",
+                options: [
+                  { value: "nein", label: "Nein" },
+                  { value: "ja", label: "Ja" },
+                ],
+              },
+            ]}
+          />
         }
       />
 

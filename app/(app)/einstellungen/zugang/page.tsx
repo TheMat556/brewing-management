@@ -2,6 +2,7 @@ import { ArrowLeft, CheckCircle2, ShieldCheck, UserPlus } from "lucide-react";
 import Link from "next/link";
 
 import { PageHeader } from "@/components/brewing/page-header";
+import { DemoActionButton } from "@/components/demo/demo-action-dialog";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -30,10 +31,37 @@ export default function ZugangPage() {
                 Zurück
               </Link>
             </Button>
-            <Button disabled title="Im Demo-Modus nicht verfügbar">
-              <UserPlus />
-              Benutzer freischalten
-            </Button>
+            <DemoActionButton
+              label="Benutzer freischalten"
+              title="Benutzer freischalten"
+              description="Einen authentifizierten Benutzer zur Single-Owner-Allowlist hinzufügen."
+              submitLabel="Freischaltung vorbereiten"
+              icon={<UserPlus />}
+              successMessage="Demo-Freischaltung vorbereitet."
+              fields={[
+                {
+                  kind: "email",
+                  name: "email",
+                  label: "E-Mail",
+                  placeholder: "benutzer@example.com",
+                  required: true,
+                  hint: "Der Benutzer muss bereits über Supabase Auth existieren.",
+                },
+                {
+                  kind: "select",
+                  name: "rolle",
+                  label: "Rolle",
+                  required: true,
+                  defaultValue: "Betrachter",
+                  options: [
+                    { value: "Betrachter", label: "Betrachter" },
+                    { value: "Brauer", label: "Brauer" },
+                    { value: "Administrator", label: "Administrator" },
+                  ],
+                  hint: "Rollen sind aktuell nur Demo-Metadaten; die Allowlist speichert die Benutzer-ID.",
+                },
+              ]}
+            />
           </>
         }
       />

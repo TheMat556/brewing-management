@@ -3,7 +3,7 @@ import { Plus, Wheat } from "lucide-react";
 import { PageHeader } from "@/components/brewing/page-header";
 import { StatCard } from "@/components/brewing/stat-card";
 import { ArchivBadge, KategorieBadge } from "@/components/brewing/status-badge";
-import { Button } from "@/components/ui/button";
+import { DemoActionButton } from "@/components/demo/demo-action-dialog";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import {
   Table,
@@ -32,10 +32,60 @@ export default function RohstoffePage() {
         title="Rohstoffe"
         description="Stammdaten für Malz, Hopfen, Hefe, Gewürze und sonstige Zutaten. Der Bestand wird aus den Lagerchargen abgeleitet."
         actions={
-          <Button disabled title="Im Demo-Modus nicht verfügbar">
-            <Plus />
-            Rohstoff anlegen
-          </Button>
+          <DemoActionButton
+            label="Rohstoff anlegen"
+            title="Rohstoff anlegen"
+            description="Stammdaten für einen neuen Rohstoff erfassen. Die Eingabe bleibt in dieser Demo lokal."
+            submitLabel="Rohstoff vorbereiten"
+            icon={<Plus />}
+            successMessage="Demo-Rohstoff vorbereitet."
+            fields={[
+              {
+                kind: "text",
+                name: "name",
+                label: "Name",
+                placeholder: "z. B. Pilsner Malz",
+                required: true,
+              },
+              {
+                kind: "select",
+                name: "kategorie",
+                label: "Kategorie",
+                required: true,
+                placeholder: "Kategorie wählen",
+                options: [
+                  { value: "MALZ", label: "Malz" },
+                  { value: "HOPFEN", label: "Hopfen" },
+                  { value: "HEFE", label: "Hefe" },
+                  { value: "GEWUERZ", label: "Gewürz" },
+                  { value: "SONSTIGES", label: "Sonstiges" },
+                ],
+              },
+              {
+                kind: "select",
+                name: "basiseinheit",
+                label: "Basiseinheit",
+                required: true,
+                placeholder: "Einheit wählen",
+                options: [
+                  { value: "g", label: "Gramm (g)" },
+                  { value: "ml", label: "Milliliter (ml)" },
+                  { value: "Stueck", label: "Stück" },
+                ],
+              },
+              { kind: "textarea", name: "notizen", label: "Notizen", placeholder: "Optional" },
+              {
+                kind: "select",
+                name: "archiviert",
+                label: "Archiviert",
+                defaultValue: "nein",
+                options: [
+                  { value: "nein", label: "Nein" },
+                  { value: "ja", label: "Ja" },
+                ],
+              },
+            ]}
+          />
         }
       />
 

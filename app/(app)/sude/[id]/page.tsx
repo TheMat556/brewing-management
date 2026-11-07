@@ -1,10 +1,11 @@
-import { ArrowLeft, ClipboardCheck, PackageMinus, Repeat2 } from "lucide-react";
+import { ArrowLeft, ClipboardCheck, PackageMinus, Plus, Repeat2 } from "lucide-react";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { BoilSchedule } from "@/components/brewing/boil-schedule";
 import { PageHeader } from "@/components/brewing/page-header";
 import { BewegungTypBadge, SudStatusBadge } from "@/components/brewing/status-badge";
 import { TargetActual } from "@/components/brewing/target-actual";
+import { DemoActionButton } from "@/components/demo/demo-action-dialog";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -18,6 +19,7 @@ import {
 } from "@/components/ui/table";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
+  geraete as alleGeraete,
   getBewegungDetails,
   getBewegungenFuerSud,
   getRezeptFuerVersion,
@@ -27,6 +29,7 @@ import {
   getSudZutaten,
   getVersionFuerSud,
   lagerbewegungen,
+  rohstoffe,
   sude,
 } from "@/lib/demo";
 import {
@@ -40,7 +43,7 @@ import {
   formatQuantity,
   formatSignedNumber,
 } from "@/lib/format";
-import { basiseinheitLabels, prozessschrittTypLabels } from "@/lib/labels";
+import { basiseinheitLabels, prozessschrittTypLabels, sudStatusLabels } from "@/lib/labels";
 
 export const instant = false;
 
@@ -105,10 +108,80 @@ export default async function SudPage({ params }: { params: Promise<{ id: string
                 Zurück
               </Link>
             </Button>
-            <Button disabled title="Im Demo-Modus nicht verfügbar">
-              <ClipboardCheck />
-              Ist-Werte erfassen
-            </Button>
+            <DemoActionButton
+              label="Ist-Werte erfassen"
+              title="Ist-Werte erfassen"
+              description="Gemessene Werte für diesen Sud vorbereiten. Leere Felder bleiben unbekannt."
+              submitLabel="Werte vorbereiten"
+              icon={<ClipboardCheck />}
+              successMessage="Demo-Ist-Werte vorbereitet."
+              fields={[
+                {
+                  kind: "select",
+                  name: "status",
+                  label: "Sud-Status",
+                  required: true,
+                  defaultValue: sud.status,
+                  options: (
+                    Object.keys(sudStatusLabels) as Array<keyof typeof sudStatusLabels>
+                  ).map((status) => ({ value: status, label: sudStatusLabels[status] })),
+                },
+                {
+                  kind: "number",
+                  name: "ausschlag",
+                  label: "Ausschlagmenge (L)",
+                  placeholder: "z. B. 19,5",
+                  min: 0,
+                  step: "0.1",
+                },
+                {
+                  kind: "number",
+                  name: "stammwuerze",
+                  label: "Stammwürze (°P)",
+                  placeholder: "z. B. 12,6",
+                  min: 0,
+                  step: "0.1",
+                },
+                {
+                  kind: "number",
+                  name: "abv",
+                  label: "Alkohol (% vol)",
+                  placeholder: "z. B. 5,2",
+                  min: 0,
+                  step: "0.1",
+                },
+                {
+                  kind: "number",
+                  name: "ibu",
+                  label: "Bittere (IBU)",
+                  placeholder: "z. B. 21",
+                  min: 0,
+                  step: "0.1",
+                },
+                {
+                  kind: "number",
+                  name: "ebc",
+                  label: "Farbe (EBC)",
+                  placeholder: "z. B. 7",
+                  min: 0,
+                  step: "0.1",
+                },
+                {
+                  kind: "number",
+                  name: "abgefuellt",
+                  label: "Abgefüllte Menge (L)",
+                  placeholder: "z. B. 18",
+                  min: 0,
+                  step: "0.1",
+                },
+                {
+                  kind: "textarea",
+                  name: "infos",
+                  label: "Informationen / Notizen",
+                  placeholder: "Optional",
+                },
+              ]}
+            />
           </>
         }
       />
@@ -297,10 +370,184 @@ export default async function SudPage({ params }: { params: Promise<{ id: string
                   erfasst.
                 </CardDescription>
               </div>
-              <Button disabled variant="outline" title="Im Demo-Modus nicht verfügbar">
-                <Repeat2 />
-                Zutat ersetzen
-              </Button>
+              <div className="flex flex-wrap gap-2">
+                <DemoActionButton
+                  label="Zutat hinzufügen"
+                  title="Sudzutat hinzufügen"
+                  description="Eine zusätzliche Zutat für diesen Sud vorbereiten. Name und Einheit werden als Snapshot aus dem Rohstoff übernommen."
+                  submitLabel="Zutat vorbereiten"
+                  icon={<Plus />}
+                  variant="outline"
+                  successMessage="Demo-Sudzutat vorbereitet."
+                  fields={[
+                    {
+                      kind: "select",
+                      name: "rohstoff",
+                      label: "Rohstoff",
+                      required: true,
+                      placeholder: "Rohstoff wählen",
+                      options: rohstoffe
+                        .filter((rohstoff) => !rohstoff.archiviert)
+                        .map((rohstoff) => ({
+                          value: String(rohstoff.id),
+                          label: rohstoff.name,
+                        })),
+                      hint: "Name und Basiseinheit werden beim Speichern als Snapshot übernommen.",
+                    },
+                    {
+                      kind: "number",
+                      name: "menge",
+                      label: "Geplante Menge",
+                      required: true,
+                      min: 0,
+                      step: "0.0001",
+                    },
+                    {
+                      kind: "select",
+                      name: "einheit",
+                      label: "Einheit",
+                      required: true,
+                      placeholder: "Einheit wählen",
+                      options: [
+                        { value: "g", label: "Gramm (g)" },
+                        { value: "ml", label: "Milliliter (ml)" },
+                        { value: "Stueck", label: "Stück" },
+                      ],
+                      hint: "Muss der Basiseinheit des gewählten Rohstoffs entsprechen.",
+                    },
+                    {
+                      kind: "select",
+                      name: "schritt",
+                      label: "Prozessschritt",
+                      placeholder: "Kein Schritt",
+                      options: [
+                        { value: "kein-schritt", label: "Kein Schritt" },
+                        ...schritte.map((schritt) => ({
+                          value: String(schritt.id),
+                          label: `P${schritt.position} ${schritt.name}`,
+                        })),
+                      ],
+                      hint: "Optional. Die Zugabezeit bezieht sich auf den Start dieses Schritts.",
+                    },
+                    {
+                      kind: "number",
+                      name: "alpha",
+                      label: "Alpha-Säure (%)",
+                      min: 0,
+                      step: "0.1",
+                      hint: "Optional; Berechnungsannahme für diese Zutat.",
+                    },
+                    {
+                      kind: "number",
+                      name: "ebc",
+                      label: "EBC",
+                      min: 0,
+                      step: "0.1",
+                      hint: "Optional; Farbannahme für diese Zutat.",
+                    },
+                    {
+                      kind: "number",
+                      name: "zugabe",
+                      label: "Geplante Zugabe nach Schrittstart (Min.)",
+                      min: 0,
+                      step: "0.1",
+                      hint: "Bei Würzekochen wird daraus T-minus relativ zum Kochende berechnet.",
+                    },
+                    {
+                      kind: "number",
+                      name: "ist_menge",
+                      label: "Ist-Menge",
+                      min: 0,
+                      step: "0.0001",
+                      hint: "Optional; tatsächlich verwendete Menge. Leer lassen, solange nicht erfasst.",
+                    },
+                    {
+                      kind: "number",
+                      name: "ist_zugabe",
+                      label: "Ist-Zugabe nach Schrittstart (Min.)",
+                      min: 0,
+                      step: "0.1",
+                      hint: "Optional; tatsächlicher Zugabezeitpunkt.",
+                    },
+                    {
+                      kind: "textarea",
+                      name: "notizen",
+                      label: "Notizen",
+                      placeholder: "Optional",
+                    },
+                  ]}
+                />
+                <DemoActionButton
+                  label="Zutat ersetzen"
+                  title="Zutat ersetzen"
+                  description="Ersatz für eine Batch-Zutat vorbereiten. Die Rezeptversion bleibt unverändert; Schritt und Zugabezeit werden beibehalten."
+                  submitLabel="Ersatz vorbereiten"
+                  icon={<Repeat2 />}
+                  variant="outline"
+                  successMessage="Demo-Zutatersatz vorbereitet."
+                  fields={[
+                    {
+                      kind: "select",
+                      name: "zutat",
+                      label: "Zu ersetzende Zutat",
+                      required: true,
+                      placeholder: "Zutat wählen",
+                      options: zutaten.map((zutat) => ({
+                        value: String(zutat.id),
+                        label: `${zutat.rohstoffname_snapshot} · ${formatQuantity(
+                          zutat.geplante_menge,
+                          basiseinheitLabels[zutat.einheit_snapshot],
+                        )}`,
+                      })),
+                    },
+                    {
+                      kind: "select",
+                      name: "rohstoff",
+                      label: "Neuer Rohstoff",
+                      required: true,
+                      placeholder: "Rohstoff wählen",
+                      options: rohstoffe
+                        .filter((rohstoff) => !rohstoff.archiviert)
+                        .map((rohstoff) => ({
+                          value: String(rohstoff.id),
+                          label: rohstoff.name,
+                        })),
+                      hint: "Die Einheit wird aus dem neuen Rohstoff übernommen. Bei Einheitenwechsel ist eine neue Menge erforderlich.",
+                    },
+                    {
+                      kind: "number",
+                      name: "menge",
+                      label: "Neue Menge",
+                      required: true,
+                      min: 0,
+                      step: "0.0001",
+                      hint: "Wird in der Basiseinheit des neuen Rohstoffs gespeichert.",
+                    },
+                    {
+                      kind: "number",
+                      name: "alpha",
+                      label: "Alpha-Säure (%)",
+                      min: 0,
+                      step: "0.1",
+                      hint: "Optional; alte Annahme wird nicht automatisch übernommen.",
+                    },
+                    {
+                      kind: "number",
+                      name: "ebc",
+                      label: "EBC",
+                      min: 0,
+                      step: "0.1",
+                      hint: "Optional; alte Annahme wird nicht automatisch übernommen.",
+                    },
+                    {
+                      kind: "textarea",
+                      name: "notizen",
+                      label: "Notiz / Grund",
+                      placeholder: "Warum wird ersetzt?",
+                    },
+                  ]}
+                />
+              </div>
             </CardHeader>
             <CardContent>
               <div className="w-full min-w-0 overflow-x-auto">
@@ -390,10 +637,49 @@ export default async function SudPage({ params }: { params: Promise<{ id: string
                   Zugewiesene Gerätegruppen mit Mengen- und LOB-Snapshots.
                 </CardDescription>
               </div>
-              <Button disabled variant="outline" title="Im Demo-Modus nicht verfügbar">
-                <PackageMinus />
-                Gerät zuweisen
-              </Button>
+              <DemoActionButton
+                label="Gerät zuweisen"
+                title="Gerät zuweisen"
+                description="Eine Gerätegruppe mit Menge und LOB-Nutzung für diesen Sud vorbereiten. Der LOB-Mengen-Snapshot wird aus dem Gerät übernommen."
+                submitLabel="Zuweisung vorbereiten"
+                icon={<PackageMinus />}
+                variant="outline"
+                successMessage="Demo-Gerätezuweisung vorbereitet."
+                fields={[
+                  {
+                    kind: "select",
+                    name: "geraet",
+                    label: "Gerät",
+                    required: true,
+                    placeholder: "Gerät wählen",
+                    options: alleGeraete
+                      .filter((geraet) => !geraet.archiviert)
+                      .map((geraet) => ({ value: String(geraet.id), label: geraet.name })),
+                    hint: "Name und LOB-Menge werden als Snapshot übernommen.",
+                  },
+                  {
+                    kind: "number",
+                    name: "menge",
+                    label: "Zugewiesene Menge",
+                    required: true,
+                    min: 1,
+                    defaultValue: "1",
+                    hint: "Darf die verfügbare Menge der Gerätegruppe nicht überschreiten.",
+                  },
+                  {
+                    kind: "select",
+                    name: "lob",
+                    label: "LOB genutzt",
+                    options: [
+                      { value: "nein", label: "Nein" },
+                      { value: "ja", label: "Ja" },
+                    ],
+                    defaultValue: "nein",
+                    hint: "Nur erlaubt, wenn das Gerät LOB-fähig ist und eine LOB-Menge hinterlegt hat.",
+                  },
+                  { kind: "textarea", name: "notizen", label: "Notiz", placeholder: "Optional" },
+                ]}
+              />
             </CardHeader>
             <CardContent>
               <div className="w-full min-w-0 overflow-x-auto">

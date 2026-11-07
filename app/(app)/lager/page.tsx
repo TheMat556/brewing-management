@@ -4,6 +4,7 @@ import Link from "next/link";
 import { PageHeader } from "@/components/brewing/page-header";
 import { StatCard } from "@/components/brewing/stat-card";
 import { KategorieBadge } from "@/components/brewing/status-badge";
+import { DemoActionButton } from "@/components/demo/demo-action-dialog";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -64,10 +65,56 @@ export default function LagerPage() {
         title="Lagerbestand"
         description="Der Bestand wird aus der Summe aller Lagerbewegungen berechnet. Es gibt kein separat gespeichertes Bestandsfeld."
         actions={
-          <Button disabled title="Im Demo-Modus nicht verfügbar">
-            <Plus />
-            Charge erfassen
-          </Button>
+          <DemoActionButton
+            label="Charge erfassen"
+            title="Lagercharge erfassen"
+            description="Eine neue Lieferung für einen bestehenden Rohstoff erfassen."
+            submitLabel="Charge vorbereiten"
+            icon={<Plus />}
+            successMessage="Demo-Lagercharge vorbereitet."
+            fields={[
+              {
+                kind: "select",
+                name: "rohstoff",
+                label: "Rohstoff",
+                required: true,
+                placeholder: "Rohstoff wählen",
+                options: rohstoffe
+                  .filter((rohstoff) => !rohstoff.archiviert)
+                  .map((rohstoff) => ({ value: String(rohstoff.id), label: rohstoff.name })),
+              },
+              {
+                kind: "text",
+                name: "charge",
+                label: "Lieferanten-Chargennummer",
+                placeholder: "z. B. L-2026-015",
+              },
+              {
+                kind: "date",
+                name: "lieferdatum",
+                label: "Lieferdatum",
+                required: true,
+              },
+              { kind: "date", name: "mhd", label: "Mindesthaltbarkeitsdatum" },
+              {
+                kind: "number",
+                name: "alpha",
+                label: "Alpha-Säure (%)",
+                placeholder: "Optional",
+                min: 0,
+                step: "0.1",
+              },
+              {
+                kind: "number",
+                name: "ebc",
+                label: "EBC",
+                placeholder: "Optional",
+                min: 0,
+                step: "0.1",
+              },
+              { kind: "textarea", name: "notizen", label: "Notizen", placeholder: "Optional" },
+            ]}
+          />
         }
       />
 

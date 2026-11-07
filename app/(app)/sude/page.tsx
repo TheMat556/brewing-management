@@ -4,6 +4,7 @@ import Link from "next/link";
 import { PageHeader } from "@/components/brewing/page-header";
 import { StatCard } from "@/components/brewing/stat-card";
 import { SudStatusBadge } from "@/components/brewing/status-badge";
+import { DemoActionButton } from "@/components/demo/demo-action-dialog";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import {
@@ -14,7 +15,7 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { getRezeptFuerVersion, getVersion, sude } from "@/lib/demo";
+import { getRezeptFuerVersion, getVersion, rezeptversionen, sude } from "@/lib/demo";
 import { formatDate, formatLiters, formatPlato } from "@/lib/format";
 
 export default function SudePage() {
@@ -29,10 +30,44 @@ export default function SudePage() {
         title="Sude"
         description="Sude sind unabhängige Kopien einer freigegebenen Rezeptversion. Zielwerte, Schritte, Zutaten und Geräte bleiben nach dem Anlegen editierbar."
         actions={
-          <Button disabled title="Im Demo-Modus nicht verfügbar">
-            <Plus />
-            Neuer Sud
-          </Button>
+          <DemoActionButton
+            label="Neuer Sud"
+            title="Neuen Sud anlegen"
+            description="Sud aus einer freigegebenen Rezeptversion vorbereiten. Zielwerte, Schritte, Zutaten und Geräte werden aus der Version kopiert."
+            submitLabel="Sud vorbereiten"
+            icon={<Plus />}
+            successMessage="Demo-Sud vorbereitet."
+            fields={[
+              {
+                kind: "select",
+                name: "rezeptversion",
+                label: "Rezeptversion",
+                required: true,
+                placeholder: "Freigegebene Version wählen",
+                options: rezeptversionen
+                  .filter((version) => version.status === "FREIGEGEBEN")
+                  .map((version) => ({
+                    value: String(version.id),
+                    label: `${getRezeptFuerVersion(version.id)?.name ?? "Rezept"} · v${version.versionsnummer}`,
+                  })),
+              },
+              {
+                kind: "text",
+                name: "sudnummer",
+                label: "Sudnummer",
+                placeholder: "z. B. 2026-006",
+                required: true,
+              },
+              {
+                kind: "text",
+                name: "name",
+                label: "Sudname",
+                placeholder: "z. B. Helles 2026",
+                required: true,
+              },
+              { kind: "date", name: "braudatum", label: "Braudatum" },
+            ]}
+          />
         }
       />
 

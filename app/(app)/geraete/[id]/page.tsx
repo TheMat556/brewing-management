@@ -4,6 +4,7 @@ import { notFound } from "next/navigation";
 
 import { PageHeader } from "@/components/brewing/page-header";
 import { ArchivBadge, SudStatusBadge } from "@/components/brewing/status-badge";
+import { DemoActionButton } from "@/components/demo/demo-action-dialog";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -45,10 +46,65 @@ export default async function GeraetPage({ params }: { params: Promise<{ id: str
                 Zurück
               </Link>
             </Button>
-            <Button disabled title="Im Demo-Modus nicht verfügbar">
-              <Pencil />
-              Bearbeiten
-            </Button>
+            <DemoActionButton
+              label="Bearbeiten"
+              title="Gerät bearbeiten"
+              description="Stammdaten dieser Gerätegruppe ändern. Historische Snapshots bleiben unverändert."
+              submitLabel="Änderungen vorbereiten"
+              icon={<Pencil />}
+              successMessage="Demo-Geräteänderung vorbereitet."
+              fields={[
+                {
+                  kind: "text",
+                  name: "name",
+                  label: "Name",
+                  required: true,
+                  defaultValue: geraet.name,
+                },
+                {
+                  kind: "number",
+                  name: "menge",
+                  label: "Menge",
+                  required: true,
+                  min: 0,
+                  defaultValue: String(geraet.menge),
+                },
+                {
+                  kind: "select",
+                  name: "lob_faehig",
+                  label: "LOB-fähig",
+                  defaultValue: geraet.lob_faehig ? "ja" : "nein",
+                  options: [
+                    { value: "nein", label: "Nein" },
+                    { value: "ja", label: "Ja" },
+                  ],
+                },
+                {
+                  kind: "number",
+                  name: "lob_menge",
+                  label: "LOB-Menge pro Stück (L)",
+                  min: 0,
+                  step: "0.1",
+                  defaultValue: geraet.lob_menge_l === null ? "" : String(geraet.lob_menge_l),
+                },
+                {
+                  kind: "textarea",
+                  name: "notizen",
+                  label: "Notizen",
+                  defaultValue: geraet.notizen ?? "",
+                },
+                {
+                  kind: "select",
+                  name: "archiviert",
+                  label: "Archiviert",
+                  defaultValue: geraet.archiviert ? "ja" : "nein",
+                  options: [
+                    { value: "nein", label: "Nein" },
+                    { value: "ja", label: "Ja" },
+                  ],
+                },
+              ]}
+            />
           </>
         }
       />

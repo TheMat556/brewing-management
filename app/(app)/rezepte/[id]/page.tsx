@@ -1,9 +1,10 @@
-import { ArrowLeft, FilePlus2, LockKeyhole, Trash2 } from "lucide-react";
+import { ArrowLeft, FilePlus2, LockKeyhole, Plus, Trash2 } from "lucide-react";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { BoilSchedule } from "@/components/brewing/boil-schedule";
 import { PageHeader } from "@/components/brewing/page-header";
 import { ArchivBadge, RezeptStatusBadge } from "@/components/brewing/status-badge";
+import { DemoActionButton } from "@/components/demo/demo-action-dialog";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -22,6 +23,7 @@ import {
   getVersionenFuerRezept,
   getZutatenFuerVersion,
   rezepte,
+  rohstoffe,
 } from "@/lib/demo";
 import {
   formatDate,
@@ -87,10 +89,22 @@ export default async function RezeptPage({ params }: { params: Promise<{ id: str
                 Zurück
               </Link>
             </Button>
-            <Button disabled title="Im Demo-Modus nicht verfügbar">
-              <FilePlus2 />
-              Neue Version
-            </Button>
+            <DemoActionButton
+              label="Neue Version"
+              title="Neue Rezeptversion"
+              description="Eine neue Entwurfsversion vorbereiten. Name, Beschreibung und Zielwerte werden aus der aktuellen Version übernommen und danach im Entwurf bearbeitet."
+              submitLabel="Version vorbereiten"
+              icon={<FilePlus2 />}
+              successMessage="Demo-Rezeptversion vorbereitet."
+              fields={[
+                {
+                  kind: "textarea",
+                  name: "notizen",
+                  label: "Änderungshinweis",
+                  placeholder: "Was ändert sich in dieser Version?",
+                },
+              ]}
+            />
           </>
         }
       />
@@ -211,9 +225,103 @@ export default async function RezeptPage({ params }: { params: Promise<{ id: str
 
               <div className="grid grid-cols-[minmax(0,1fr)] gap-6 xl:grid-cols-[minmax(0,1fr)_minmax(0,1.4fr)]">
                 <Card>
-                  <CardHeader>
-                    <CardTitle>Zutaten</CardTitle>
-                    <CardDescription>Mengen und Rohstoff-Snapshots dieser Version.</CardDescription>
+                  <CardHeader className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+                    <div>
+                      <CardTitle>Zutaten</CardTitle>
+                      <CardDescription>
+                        Mengen und Rohstoff-Snapshots dieser Version.
+                      </CardDescription>
+                    </div>
+                    <DemoActionButton
+                      label="Zutat hinzufügen"
+                      title="Rezeptzutat hinzufügen"
+                      description="Eine Zutat für diese Rezeptversion vorbereiten. Name und Einheit werden als Snapshot aus dem Rohstoff übernommen."
+                      submitLabel="Zutat vorbereiten"
+                      icon={<Plus />}
+                      variant="outline"
+                      successMessage="Demo-Rezeptzutat vorbereitet."
+                      fields={[
+                        {
+                          kind: "select",
+                          name: "rohstoff",
+                          label: "Rohstoff",
+                          required: true,
+                          placeholder: "Rohstoff wählen",
+                          options: rohstoffe
+                            .filter((rohstoff) => !rohstoff.archiviert)
+                            .map((rohstoff) => ({
+                              value: String(rohstoff.id),
+                              label: rohstoff.name,
+                            })),
+                          hint: "Name und Basiseinheit werden beim Speichern als Snapshot übernommen.",
+                        },
+                        {
+                          kind: "number",
+                          name: "menge",
+                          label: "Menge",
+                          required: true,
+                          min: 0,
+                          step: "0.0001",
+                        },
+                        {
+                          kind: "select",
+                          name: "einheit",
+                          label: "Einheit",
+                          required: true,
+                          placeholder: "Einheit wählen",
+                          options: [
+                            { value: "g", label: "Gramm (g)" },
+                            { value: "ml", label: "Milliliter (ml)" },
+                            { value: "Stueck", label: "Stück" },
+                          ],
+                          hint: "Muss der Basiseinheit des gewählten Rohstoffs entsprechen.",
+                        },
+                        {
+                          kind: "select",
+                          name: "schritt",
+                          label: "Prozessschritt",
+                          placeholder: "Kein Schritt",
+                          options: [
+                            { value: "kein-schritt", label: "Kein Schritt" },
+                            ...schritte.map((schritt) => ({
+                              value: String(schritt.id),
+                              label: `P${schritt.position} ${schritt.name}`,
+                            })),
+                          ],
+                          hint: "Optional. Die Zugabezeit bezieht sich auf den Start dieses Schritts.",
+                        },
+                        {
+                          kind: "number",
+                          name: "alpha",
+                          label: "Alpha-Säure (%)",
+                          min: 0,
+                          step: "0.1",
+                          hint: "Optional; Hopfen-Annahme für diese Rezeptversion.",
+                        },
+                        {
+                          kind: "number",
+                          name: "ebc",
+                          label: "EBC",
+                          min: 0,
+                          step: "0.1",
+                          hint: "Optional; Malz-Farbe für diese Rezeptversion.",
+                        },
+                        {
+                          kind: "number",
+                          name: "zugabe",
+                          label: "Zugabe nach Schrittstart (Min.)",
+                          min: 0,
+                          step: "0.1",
+                          hint: "Bei Würzekochen wird daraus T-minus relativ zum Kochende berechnet.",
+                        },
+                        {
+                          kind: "textarea",
+                          name: "notizen",
+                          label: "Notizen",
+                          placeholder: "Optional",
+                        },
+                      ]}
+                    />
                   </CardHeader>
                   <CardContent>
                     <div className="w-full min-w-0 overflow-x-auto">
@@ -325,14 +433,25 @@ export default async function RezeptPage({ params }: { params: Promise<{ id: str
               </div>
 
               <div className="flex flex-wrap gap-2">
-                <Button disabled title="Im Demo-Modus nicht verfügbar">
-                  <LockKeyhole />
-                  Freigeben
-                </Button>
-                <Button variant="destructive" disabled title="Im Demo-Modus nicht verfügbar">
-                  <Trash2 />
-                  Entwurf löschen
-                </Button>
+                <DemoActionButton
+                  label="Freigeben"
+                  title="Rezeptversion freigeben"
+                  description="Die Version würde freigegeben und danach unveränderlich. Dies ist nur eine Demo-Bestätigung."
+                  submitLabel="Freigeben"
+                  icon={<LockKeyhole />}
+                  successMessage="Demo: Rezeptversion freigegeben."
+                  fields={[]}
+                />
+                <DemoActionButton
+                  label="Entwurf löschen"
+                  title="Entwurf löschen"
+                  description="Diese Aktion würde den Entwurf dauerhaft entfernen. Dies ist nur eine Demo-Bestätigung."
+                  submitLabel="Entwurf löschen"
+                  icon={<Trash2 />}
+                  variant="destructive"
+                  successMessage="Demo: Entwurf würde gelöscht."
+                  fields={[]}
+                />
               </div>
             </TabsContent>
           );

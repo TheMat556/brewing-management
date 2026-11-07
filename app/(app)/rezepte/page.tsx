@@ -4,6 +4,7 @@ import Link from "next/link";
 import { PageHeader } from "@/components/brewing/page-header";
 import { StatCard } from "@/components/brewing/stat-card";
 import { ArchivBadge, RezeptStatusBadge } from "@/components/brewing/status-badge";
+import { DemoActionButton } from "@/components/demo/demo-action-dialog";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -21,10 +22,35 @@ export default function RezeptePage() {
         title="Rezepte"
         description="Rezepte sind versioniert. Freigegebene Versionen sind unveränderlich; Änderungen entstehen als neue Entwurfsversion."
         actions={
-          <Button disabled title="Im Demo-Modus nicht verfügbar">
-            <FilePlus2 />
-            Neues Rezept
-          </Button>
+          <DemoActionButton
+            label="Neues Rezept"
+            title="Neues Rezept"
+            description="Rezeptstammdaten erfassen; die erste Version wird gemeinsam angelegt. Zielwerte und Zutaten werden anschließend im Entwurf gepflegt."
+            submitLabel="Rezept vorbereiten"
+            icon={<FilePlus2 />}
+            successMessage="Demo-Rezept vorbereitet."
+            fields={[
+              {
+                kind: "text",
+                name: "name",
+                label: "Rezeptname",
+                placeholder: "z. B. Sommer-Pils",
+                required: true,
+              },
+              {
+                kind: "text",
+                name: "beschreibung",
+                label: "Kurzbeschreibung",
+                placeholder: "Optional",
+              },
+              {
+                kind: "textarea",
+                name: "infos",
+                label: "Interne Informationen",
+                placeholder: "Optional",
+              },
+            ]}
+          />
         }
       />
 

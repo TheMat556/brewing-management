@@ -4,7 +4,7 @@ import Link from "next/link";
 import { PageHeader } from "@/components/brewing/page-header";
 import { StatCard } from "@/components/brewing/stat-card";
 import { BewegungTypBadge } from "@/components/brewing/status-badge";
-import { Button } from "@/components/ui/button";
+import { DemoActionButton } from "@/components/demo/demo-action-dialog";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import {
   Table,
@@ -14,9 +14,16 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { getBewegungDetails, lagerbewegungen } from "@/lib/demo";
+import {
+  getBewegungDetails,
+  getRohstoff,
+  lagerbewegungen,
+  lagerchargen,
+  sude,
+  sudzutaten,
+} from "@/lib/demo";
 import { formatDateTime, formatSignedNumber } from "@/lib/format";
-import { basiseinheitLabels } from "@/lib/labels";
+import { basiseinheitLabels, lagerbewegungTypLabels } from "@/lib/labels";
 
 export default function LagerbewegungenPage() {
   const bewegungen = [...lagerbewegungen].sort((a, b) => b.zeitpunkt.localeCompare(a.zeitpunkt));
@@ -31,10 +38,76 @@ export default function LagerbewegungenPage() {
         title="Lagerbewegungen"
         description="Vollständige, append-only Historie. Bestandskorrekturen werden als neue Bewegung erfasst."
         actions={
-          <Button disabled title="Im Demo-Modus nicht verfügbar">
-            <Plus />
-            Bewegung erfassen
-          </Button>
+          <DemoActionButton
+            label="Bewegung erfassen"
+            title="Lagerbewegung erfassen"
+            description="Eine append-only Bewegung für eine Lagercharge vorbereiten."
+            submitLabel="Bewegung vorbereiten"
+            icon={<Plus />}
+            successMessage="Demo-Lagerbewegung vorbereitet."
+            fields={[
+              {
+                kind: "select",
+                name: "charge",
+                label: "Lagercharge",
+                required: true,
+                placeholder: "Charge wählen",
+                options: lagerchargen.map((charge) => ({
+                  value: String(charge.id),
+                  label: `${getRohstoff(charge.rohstoff_id)?.name ?? "Rohstoff"} · ${charge.lieferanten_chargennummer ?? "ohne Charge"}`,
+                })),
+              },
+              {
+                kind: "select",
+                name: "sudzutat",
+                label: "Verknüpfte Sudzutat",
+                placeholder: "Keine Verknüpfung",
+                options: [
+                  { value: "keine", label: "Keine Verknüpfung" },
+                  ...sudzutaten.map((zutat) => {
+                    const sud = sude.find((item) => item.id === zutat.sud_id);
+                    return {
+                      value: String(zutat.id),
+                      label: `${sud?.sudnummer ?? "Sud"} · ${zutat.rohstoffname_snapshot}`,
+                    };
+                  }),
+                ],
+                hint: "Optional; nur Verbrauch/Korrektur einer konkreten Sudzutat verknüpfen.",
+              },
+              {
+                kind: "datetime-local",
+                name: "zeitpunkt",
+                label: "Zeitpunkt",
+                hint: "Optional; im echten System wird standardmäßig der aktuelle Zeitpunkt gesetzt.",
+              },
+              {
+                kind: "select",
+                name: "typ",
+                label: "Bewegungstyp",
+                required: true,
+                placeholder: "Typ wählen",
+                options: (
+                  Object.keys(lagerbewegungTypLabels) as Array<keyof typeof lagerbewegungTypLabels>
+                ).map((typ) => ({ value: typ, label: lagerbewegungTypLabels[typ] })),
+              },
+              {
+                kind: "number",
+                name: "delta",
+                label: "Mengendelta",
+                placeholder: "z. B. -2500 oder 1000",
+                required: true,
+                step: "0.0001",
+                hint: "ZUGANG > 0; VERBRAUCH/ENTSORGUNG < 0; KORREKTUR beliebig, aber nicht 0.",
+              },
+              {
+                kind: "textarea",
+                name: "notizen",
+                label: "Notiz",
+                placeholder: "Optional",
+                hint: "Der Idempotenzschlüssel wird im echten System automatisch erzeugt.",
+              },
+            ]}
+          />
         }
       />
 
