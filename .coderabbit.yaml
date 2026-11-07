@@ -1,0 +1,39 @@
+language: "de-DE"
+early_access: false
+
+reviews:
+  profile: "chill"
+  high_level_summary: true
+  poem: false
+  review_status: true
+  collapse_walkthrough: false
+
+  auto_review:
+    enabled: true
+    drafts: false
+    base_branches:
+      - main
+
+  path_filters:
+    - "!**/node_modules/**"
+    - "!**/.next/**"
+    - "!**/bun.lock"
+    - "!**/*.png"
+    - "!**/*.ico"
+
+  path_instructions:
+    - path: "supabase/migrations/**"
+      instructions: >
+        Prüfe SQL-Migrationen auf Transaktionssicherheit, RLS, Grants,
+        Suchpfade, Migrationsreihenfolge und unbeabsichtigte Datenänderungen.
+    - path: "lib/supabase/**"
+      instructions: >
+        Achte darauf, dass keine Service-Role- oder Secret-Keys in
+        clientseitigen Modulen landen und der Session-Refresh erhalten bleibt.
+    - path: "app/**"
+      instructions: >
+        Prüfe Next.js-16-Konventionen, Cache-Components-Grenzen, mobile
+        Überläufe und die Trennung von Server- und Client-Komponenten.
+
+chat:
+  auto_reply: true

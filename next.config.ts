@@ -9,5 +9,8 @@ export default (phase: string): NextConfig => {
     partialPrefetching: true,
     allowedDevOrigins: isDev ? ["code.hader.ovh"] : undefined,
     basePath: isDev ? process.env.NEXT_PUBLIC_BASE_PATH || undefined : undefined,
+    async redirects() {
+      return [{ source: "/", destination: "/dashboard", permanent: false }];
+    },
   };
 };

@@ -95,6 +95,8 @@ there; resolved versions are from this project's lockfile.
 | `lucide-react`              | `^0.511.0`    | Yes                 | Keep          | Starter icons                                                                 |
 | `next-themes`               | `^0.4.6`      | Yes                 | Keep          | Starter theme switching                                                       |
 | Radix packages              | Multiple      | Yes                 | Keep          | Starter UI primitives                                                         |
+| `radix-ui`                  | Not present   | No                  | **Add**       | Unified primitives required by the latest shadcn `sidebar-08` block           |
+| `cn`                        | Not present   | No                  | **Reject**    | Generated `cn` imports were normalized to the existing `@/lib/utils` helper   |
 | `zod`                       | `^4.4.3`      | No                  | **Add**       | Present in Grove and useful for server-side validation; resolved 4.6.7        |
 | `vitest`                    | `^4.1.10`     | No                  | **Add**       | Test runner; resolved 5.1.0                                                   |
 | `pg`                        | Not present   | No                  | **Add**       | Direct local PostgreSQL acceptance/concurrency tests; resolved 8.23.1         |
@@ -125,7 +127,8 @@ the persistence stack.
 
 Vitest only for the setup phase. No UI test library or E2E framework is installed until
 there is application behavior to test. The smoke test validates the `cn` helper and proves
-the runner and path-alias configuration work.
+the runner and path-alias configuration work. Demo fixture integrity tests validate movement
+signs, derived stock, batch provenance, release timestamps, and equipment constraints.
 
 ## Local Supabase decisions
 
@@ -187,7 +190,7 @@ and SMTP is still required before production use.
 - `lib/domain/validation.ts` provides Zod schemas for domain inputs. Generated database
   types are integrated into all Supabase clients.
 - Local acceptance suite: 27 PostgreSQL integration tests pass, plus unit tests for the
-  starter helper and domain validation.
+  starter helper, domain validation, and demo fixture integrity.
 
 Detailed table names, constraints, RPC signatures, and semantics are documented in
 [`domain-conventions.md`](domain-conventions.md).
