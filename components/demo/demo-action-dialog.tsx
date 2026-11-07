@@ -50,6 +50,7 @@ type DemoActionButtonProps = {
   size?: "default" | "sm" | "lg" | "icon";
   className?: string;
   successMessage?: string;
+  onSubmit?: (values: Record<string, string>) => void;
 };
 
 function defaultValues(fields: DemoField[]): Record<string, string> {
@@ -196,6 +197,7 @@ export function DemoActionButton({
   size = "default",
   className,
   successMessage,
+  onSubmit,
 }: DemoActionButtonProps) {
   const [open, setOpen] = useState(false);
   const [values, setValues] = useState<Record<string, string>>(() => defaultValues(fields));
@@ -223,6 +225,7 @@ export function DemoActionButton({
       return;
     }
     setError(null);
+    onSubmit?.(values);
     setSubmitted(true);
   }
 

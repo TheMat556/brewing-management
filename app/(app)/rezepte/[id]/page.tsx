@@ -1,21 +1,13 @@
-import { ArrowLeft, FilePlus2, LockKeyhole, Plus, Trash2 } from "lucide-react";
+import { ArrowLeft, FilePlus2, LockKeyhole, Trash2 } from "lucide-react";
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { BoilSchedule } from "@/components/brewing/boil-schedule";
 import { PageHeader } from "@/components/brewing/page-header";
+import { RecipeVersionEditor } from "@/components/brewing/recipe-version-editor";
 import { ArchivBadge, RezeptStatusBadge } from "@/components/brewing/status-badge";
 import { DemoActionButton } from "@/components/demo/demo-action-dialog";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
   getRezept,
@@ -29,40 +21,15 @@ import {
   formatDate,
   formatDateTime,
   formatLiters,
-  formatMinutes,
   formatNumber,
   formatPercent,
   formatPlato,
 } from "@/lib/format";
-import { basiseinheitLabels, prozessschrittTypLabels } from "@/lib/labels";
 
 export const instant = false;
 
 export function generateStaticParams() {
   return rezepte.map((rezept) => ({ id: String(rezept.id) }));
-}
-
-function zugabeLabel(
-  zutat: { zugabe_nach_min: number | null },
-  schritt?: { typ: string; dauer_min: number | null },
-): string {
-  if (zutat.zugabe_nach_min === null) {
-    return "—";
-  }
-  if (schritt?.typ === "KOCHEN" && schritt.dauer_min !== null) {
-    const vorKochende = schritt.dauer_min - zutat.zugabe_nach_min;
-    if (vorKochende > 0) {
-      return `T-${formatNumber(vorKochende)} Min.`;
-    }
-    if (vorKochende === 0) {
-      return "Kochende";
-    }
-    return `T+${formatNumber(Math.abs(vorKochende))} Min.`;
-  }
-  if (zutat.zugabe_nach_min === 0) {
-    return "zu Beginn";
-  }
-  return `+${formatMinutes(zutat.zugabe_nach_min)}`;
 }
 
 export default async function RezeptPage({ params }: { params: Promise<{ id: string }> }) {
@@ -130,10 +97,6 @@ export default async function RezeptPage({ params }: { params: Promise<{ id: str
         {versionen.map((version) => {
           const zutaten = getZutatenFuerVersion(version.id);
           const schritte = getSchritteFuerVersion(version.id);
-          const kochschritt = schritte.find((schritt) => schritt.typ === "KOCHEN");
-          const kochzutaten = kochschritt
-            ? zutaten.filter((zutat) => zutat.rezeptschritt_id === kochschritt.id)
-            : [];
           return (
             <TabsContent key={version.id} value={String(version.id)} className="space-y-4">
               <div className="flex flex-wrap items-center gap-2">
@@ -210,227 +173,12 @@ export default async function RezeptPage({ params }: { params: Promise<{ id: str
                 </Card>
               ) : null}
 
-              <BoilSchedule
-                dauerMin={kochschritt?.dauer_min ?? null}
-                additions={kochzutaten.map((zutat) => ({
-                  id: zutat.id,
-                  name: zutat.rohstoffname_snapshot,
-                  menge: zutat.menge,
-                  einheit: basiseinheitLabels[zutat.einheit_snapshot],
-                  alphasaeureProzent: zutat.alphasaeure_prozent,
-                  zugabeNachStartMin: zutat.zugabe_nach_min,
-                  notizen: zutat.notizen,
-                }))}
+              <RecipeVersionEditor
+                version={version}
+                zutaten={zutaten}
+                schritte={schritte}
+                rohstoffe={rohstoffe}
               />
-
-              <div className="grid grid-cols-[minmax(0,1fr)] gap-6 xl:grid-cols-[minmax(0,1fr)_minmax(0,1.4fr)]">
-                <Card>
-                  <CardHeader className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
-                    <div>
-                      <CardTitle>Zutaten</CardTitle>
-                      <CardDescription>
-                        Mengen und Rohstoff-Snapshots dieser Version.
-                      </CardDescription>
-                    </div>
-                    <DemoActionButton
-                      label="Zutat hinzufügen"
-                      title="Rezeptzutat hinzufügen"
-                      description="Eine Zutat für diese Rezeptversion vorbereiten. Name und Einheit werden als Snapshot aus dem Rohstoff übernommen."
-                      submitLabel="Zutat vorbereiten"
-                      icon={<Plus />}
-                      variant="outline"
-                      successMessage="Demo-Rezeptzutat vorbereitet."
-                      fields={[
-                        {
-                          kind: "select",
-                          name: "rohstoff",
-                          label: "Rohstoff",
-                          required: true,
-                          placeholder: "Rohstoff wählen",
-                          options: rohstoffe
-                            .filter((rohstoff) => !rohstoff.archiviert)
-                            .map((rohstoff) => ({
-                              value: String(rohstoff.id),
-                              label: rohstoff.name,
-                            })),
-                          hint: "Name und Basiseinheit werden beim Speichern als Snapshot übernommen.",
-                        },
-                        {
-                          kind: "number",
-                          name: "menge",
-                          label: "Menge",
-                          required: true,
-                          min: 0,
-                          step: "0.0001",
-                        },
-                        {
-                          kind: "select",
-                          name: "einheit",
-                          label: "Einheit",
-                          required: true,
-                          placeholder: "Einheit wählen",
-                          options: [
-                            { value: "g", label: "Gramm (g)" },
-                            { value: "ml", label: "Milliliter (ml)" },
-                            { value: "Stueck", label: "Stück" },
-                          ],
-                          hint: "Muss der Basiseinheit des gewählten Rohstoffs entsprechen.",
-                        },
-                        {
-                          kind: "select",
-                          name: "schritt",
-                          label: "Prozessschritt",
-                          placeholder: "Kein Schritt",
-                          options: [
-                            { value: "kein-schritt", label: "Kein Schritt" },
-                            ...schritte.map((schritt) => ({
-                              value: String(schritt.id),
-                              label: `P${schritt.position} ${schritt.name}`,
-                            })),
-                          ],
-                          hint: "Optional. Die Zugabezeit bezieht sich auf den Start dieses Schritts.",
-                        },
-                        {
-                          kind: "number",
-                          name: "alpha",
-                          label: "Alpha-Säure (%)",
-                          min: 0,
-                          step: "0.1",
-                          hint: "Optional; Hopfen-Annahme für diese Rezeptversion.",
-                        },
-                        {
-                          kind: "number",
-                          name: "ebc",
-                          label: "EBC",
-                          min: 0,
-                          step: "0.1",
-                          hint: "Optional; Malz-Farbe für diese Rezeptversion.",
-                        },
-                        {
-                          kind: "number",
-                          name: "zugabe",
-                          label: "Zugabe nach Schrittstart (Min.)",
-                          min: 0,
-                          step: "0.1",
-                          hint: "Bei Würzekochen wird daraus T-minus relativ zum Kochende berechnet.",
-                        },
-                        {
-                          kind: "textarea",
-                          name: "notizen",
-                          label: "Notizen",
-                          placeholder: "Optional",
-                        },
-                      ]}
-                    />
-                  </CardHeader>
-                  <CardContent>
-                    <div className="w-full min-w-0 overflow-x-auto">
-                      <Table>
-                        <TableHeader>
-                          <TableRow>
-                            <TableHead>Rohstoff</TableHead>
-                            <TableHead className="text-right">Menge</TableHead>
-                            <TableHead>Schritt</TableHead>
-                            <TableHead className="hidden sm:table-cell">Alpha / EBC</TableHead>
-                            <TableHead className="hidden text-right md:table-cell">
-                              Zugabe
-                            </TableHead>
-                          </TableRow>
-                        </TableHeader>
-                        <TableBody>
-                          {zutaten.map((zutat) => {
-                            const schritt = schritte.find(
-                              (item) => item.id === zutat.rezeptschritt_id,
-                            );
-                            return (
-                              <TableRow key={zutat.id}>
-                                <TableCell className="font-medium">
-                                  {zutat.rohstoffname_snapshot}
-                                </TableCell>
-                                <TableCell className="text-right tabular-nums">
-                                  {formatNumber(zutat.menge)}{" "}
-                                  {basiseinheitLabels[zutat.einheit_snapshot]}
-                                </TableCell>
-                                <TableCell className="text-muted-foreground">
-                                  {schritt ? `P${schritt.position} ${schritt.name}` : "—"}
-                                </TableCell>
-                                <TableCell className="hidden whitespace-nowrap text-muted-foreground sm:table-cell">
-                                  {zutat.alphasaeure_prozent !== null
-                                    ? formatPercent(zutat.alphasaeure_prozent)
-                                    : zutat.ebc !== null
-                                      ? `EBC ${formatNumber(zutat.ebc)}`
-                                      : "—"}
-                                </TableCell>
-                                <TableCell className="hidden text-right text-muted-foreground md:table-cell">
-                                  {zugabeLabel(zutat, schritt)}
-                                </TableCell>
-                              </TableRow>
-                            );
-                          })}
-                        </TableBody>
-                      </Table>
-                    </div>
-                  </CardContent>
-                </Card>
-
-                <Card>
-                  <CardHeader>
-                    <CardTitle>Schritte</CardTitle>
-                    <CardDescription>
-                      Reihenfolge und Prozesswerte der Rezeptversion.
-                    </CardDescription>
-                  </CardHeader>
-                  <CardContent>
-                    <div className="w-full min-w-0 overflow-x-auto">
-                      <Table>
-                        <TableHeader>
-                          <TableRow>
-                            <TableHead>Pos.</TableHead>
-                            <TableHead>Typ</TableHead>
-                            <TableHead>Name</TableHead>
-                            <TableHead className="text-right">Temperatur</TableHead>
-                            <TableHead className="text-right">Dauer</TableHead>
-                            <TableHead className="hidden text-right lg:table-cell">
-                              Wasser
-                            </TableHead>
-                          </TableRow>
-                        </TableHeader>
-                        <TableBody>
-                          {schritte.map((schritt) => (
-                            <TableRow key={schritt.id}>
-                              <TableCell className="tabular-nums">{schritt.position}</TableCell>
-                              <TableCell>
-                                <Badge variant="secondary">
-                                  {prozessschrittTypLabels[schritt.typ]}
-                                </Badge>
-                              </TableCell>
-                              <TableCell>
-                                <div className="font-medium">{schritt.name}</div>
-                                {schritt.anweisung ? (
-                                  <div className="max-w-72 whitespace-normal text-xs text-muted-foreground">
-                                    {schritt.anweisung}
-                                  </div>
-                                ) : null}
-                              </TableCell>
-                              <TableCell className="text-right tabular-nums">
-                                {schritt.temperatur_c === null
-                                  ? "—"
-                                  : `${formatNumber(schritt.temperatur_c)} °C`}
-                              </TableCell>
-                              <TableCell className="text-right tabular-nums">
-                                {formatMinutes(schritt.dauer_min)}
-                              </TableCell>
-                              <TableCell className="hidden text-right tabular-nums lg:table-cell">
-                                {formatLiters(schritt.wassermenge_l)}
-                              </TableCell>
-                            </TableRow>
-                          ))}
-                        </TableBody>
-                      </Table>
-                    </div>
-                  </CardContent>
-                </Card>
-              </div>
 
               <div className="flex flex-wrap gap-2">
                 <DemoActionButton
