@@ -7,6 +7,13 @@ import { DemoDialogShell } from "@/components/demo/demo-action-dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import type { Rezept, Rezeptversion, Rohstoff } from "@/lib/demo";
 import { basiseinheitLabels, prozessschrittTypLabels } from "@/lib/labels";
 
@@ -43,9 +50,6 @@ type WizardTargets = {
   ebc: string;
   infos: string;
 };
-
-const inputClass =
-  "h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-xs outline-none transition-[color,box-shadow] placeholder:text-muted-foreground focus-visible:border-ring focus-visible:ring-[3px] focus-visible:ring-ring/50 dark:bg-input/30";
 
 const textareaClass =
   "min-h-20 w-full rounded-md border border-input bg-transparent px-3 py-2 text-sm shadow-xs outline-none transition-[color,box-shadow] placeholder:text-muted-foreground focus-visible:border-ring focus-visible:ring-[3px] focus-visible:ring-ring/50 dark:bg-input/30";
@@ -269,7 +273,7 @@ export function RecipeWizard({
             </div>
           </div>
         ) : (
-          <div className="space-y-5">
+          <div className="space-y-6">
             <ol className="flex flex-wrap gap-2 text-xs">
               {stepTitles.map((title, index) => (
                 <li
@@ -323,7 +327,7 @@ export function RecipeWizard({
             {activeStep === 1 ? (
               <div className="space-y-3">
                 {steps.map((schritt, index) => (
-                  <div key={schritt.key} className="rounded-lg border p-3">
+                  <div key={schritt.key} className="rounded-lg border p-4">
                     <div className="mb-3 flex items-center justify-between gap-2">
                       <p className="text-sm font-medium">Schritt {index + 1}</p>
                       <Button
@@ -337,8 +341,8 @@ export function RecipeWizard({
                         Entfernen
                       </Button>
                     </div>
-                    <div className="grid gap-3 sm:grid-cols-2">
-                      <div className="grid gap-1.5">
+                    <div className="grid gap-4 sm:grid-cols-2">
+                      <div className="grid gap-2">
                         <Label htmlFor={`step-position-${index}`}>Position</Label>
                         <Input
                           id={`step-position-${index}`}
@@ -354,30 +358,31 @@ export function RecipeWizard({
                           }
                         />
                       </div>
-                      <div className="grid gap-1.5">
+                      <div className="grid gap-2">
                         <Label htmlFor={`step-typ-${index}`}>Typ</Label>
-                        <select
-                          id={`step-typ-${index}`}
-                          className={inputClass}
+                        <Select
                           value={schritt.typ}
-                          onChange={(event) =>
+                          onValueChange={(value) =>
                             setSteps((current) =>
                               current.map((item, i) =>
-                                i === index
-                                  ? { ...item, typ: event.target.value as WizardStep["typ"] }
-                                  : item,
+                                i === index ? { ...item, typ: value as WizardStep["typ"] } : item,
                               ),
                             )
                           }
                         >
-                          {Object.entries(prozessschrittTypLabels).map(([value, label]) => (
-                            <option key={value} value={value}>
-                              {label}
-                            </option>
-                          ))}
-                        </select>
+                          <SelectTrigger id={`step-typ-${index}`} className="w-full">
+                            <SelectValue placeholder="Typ wählen" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            {Object.entries(prozessschrittTypLabels).map(([value, label]) => (
+                              <SelectItem key={value} value={value}>
+                                {label}
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
                       </div>
-                      <div className="grid gap-1.5 sm:col-span-2">
+                      <div className="grid gap-2 sm:col-span-2">
                         <Label htmlFor={`step-name-${index}`}>Name</Label>
                         <Input
                           id={`step-name-${index}`}
@@ -392,7 +397,7 @@ export function RecipeWizard({
                           placeholder="z. B. Läuterrast"
                         />
                       </div>
-                      <div className="grid gap-1.5">
+                      <div className="grid gap-2">
                         <Label htmlFor={`step-temperatur-${index}`}>Temperatur (°C)</Label>
                         <Input
                           id={`step-temperatur-${index}`}
@@ -408,7 +413,7 @@ export function RecipeWizard({
                           }
                         />
                       </div>
-                      <div className="grid gap-1.5">
+                      <div className="grid gap-2">
                         <Label htmlFor={`step-dauer-${index}`}>Dauer (Min.)</Label>
                         <Input
                           id={`step-dauer-${index}`}
@@ -425,7 +430,7 @@ export function RecipeWizard({
                           }
                         />
                       </div>
-                      <div className="grid gap-1.5">
+                      <div className="grid gap-2">
                         <Label htmlFor={`step-wasser-${index}`}>Wassermenge (L)</Label>
                         <Input
                           id={`step-wasser-${index}`}
@@ -442,7 +447,7 @@ export function RecipeWizard({
                           }
                         />
                       </div>
-                      <div className="grid gap-1.5 sm:col-span-2">
+                      <div className="grid gap-2 sm:col-span-2">
                         <Label htmlFor={`step-anweisung-${index}`}>Anweisung</Label>
                         <textarea
                           id={`step-anweisung-${index}`}
@@ -474,7 +479,7 @@ export function RecipeWizard({
             {activeStep === 2 ? (
               <div className="space-y-3">
                 {ingredients.map((zutat, index) => (
-                  <div key={zutat.key} className="rounded-lg border p-3">
+                  <div key={zutat.key} className="rounded-lg border p-4">
                     <div className="mb-3 flex items-center justify-between gap-2">
                       <p className="text-sm font-medium">Zutat {index + 1}</p>
                       <Button
@@ -490,32 +495,34 @@ export function RecipeWizard({
                         Entfernen
                       </Button>
                     </div>
-                    <div className="grid gap-3 sm:grid-cols-2">
-                      <div className="grid gap-1.5 sm:col-span-2">
+                    <div className="grid gap-4 sm:grid-cols-2">
+                      <div className="grid gap-2 sm:col-span-2">
                         <Label htmlFor={`ingredient-rohstoff-${index}`}>Rohstoff</Label>
-                        <select
-                          id={`ingredient-rohstoff-${index}`}
-                          className={inputClass}
-                          value={zutat.rohstoff}
-                          onChange={(event) =>
+                        <Select
+                          value={zutat.rohstoff || undefined}
+                          onValueChange={(value) =>
                             setIngredients((current) =>
                               current.map((item, i) =>
-                                i === index ? { ...item, rohstoff: event.target.value } : item,
+                                i === index ? { ...item, rohstoff: value } : item,
                               ),
                             )
                           }
                         >
-                          <option value="">Rohstoff wählen</option>
-                          {rohstoffe
-                            .filter((rohstoff) => !rohstoff.archiviert)
-                            .map((rohstoff) => (
-                              <option key={rohstoff.id} value={String(rohstoff.id)}>
-                                {rohstoff.name}
-                              </option>
-                            ))}
-                        </select>
+                          <SelectTrigger id={`ingredient-rohstoff-${index}`} className="w-full">
+                            <SelectValue placeholder="Rohstoff wählen" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            {rohstoffe
+                              .filter((rohstoff) => !rohstoff.archiviert)
+                              .map((rohstoff) => (
+                                <SelectItem key={rohstoff.id} value={String(rohstoff.id)}>
+                                  {rohstoff.name}
+                                </SelectItem>
+                              ))}
+                          </SelectContent>
+                        </Select>
                       </div>
-                      <div className="grid gap-1.5">
+                      <div className="grid gap-2">
                         <Label htmlFor={`ingredient-menge-${index}`}>Menge</Label>
                         <Input
                           id={`ingredient-menge-${index}`}
@@ -532,58 +539,64 @@ export function RecipeWizard({
                           }
                         />
                       </div>
-                      <div className="grid gap-1.5">
+                      <div className="grid gap-2">
                         <Label htmlFor={`ingredient-einheit-${index}`}>Einheit</Label>
-                        <select
-                          id={`ingredient-einheit-${index}`}
-                          className={inputClass}
+                        <Select
                           value={zutat.einheit}
-                          onChange={(event) =>
+                          onValueChange={(value) =>
                             setIngredients((current) =>
                               current.map((item, i) =>
                                 i === index
                                   ? {
                                       ...item,
-                                      einheit: event.target.value as WizardIngredient["einheit"],
+                                      einheit: value as WizardIngredient["einheit"],
                                     }
                                   : item,
                               ),
                             )
                           }
                         >
-                          {Object.entries(basiseinheitLabels).map(([value, label]) => (
-                            <option key={value} value={value}>
-                              {label}
-                            </option>
-                          ))}
-                        </select>
+                          <SelectTrigger id={`ingredient-einheit-${index}`} className="w-full">
+                            <SelectValue placeholder="Einheit wählen" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            {Object.entries(basiseinheitLabels).map(([value, label]) => (
+                              <SelectItem key={value} value={value}>
+                                {label}
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
                       </div>
-                      <div className="grid gap-1.5 sm:col-span-2">
+                      <div className="grid gap-2 sm:col-span-2">
                         <Label htmlFor={`ingredient-schritt-${index}`}>Prozessschritt</Label>
-                        <select
-                          id={`ingredient-schritt-${index}`}
-                          className={inputClass}
+                        <Select
                           value={zutat.schritt}
-                          onChange={(event) =>
+                          onValueChange={(value) =>
                             setIngredients((current) =>
                               current.map((item, i) =>
-                                i === index ? { ...item, schritt: event.target.value } : item,
+                                i === index ? { ...item, schritt: value } : item,
                               ),
                             )
                           }
                         >
-                          <option value="kein-schritt">Kein Schritt</option>
-                          {steps.map((schritt, stepIndex) => (
-                            <option
-                              key={`${schritt.key}-ingredient-option`}
-                              value={String(stepIndex)}
-                            >
-                              P{schritt.position || stepIndex + 1} {schritt.name || "Schritt"}
-                            </option>
-                          ))}
-                        </select>
+                          <SelectTrigger id={`ingredient-schritt-${index}`} className="w-full">
+                            <SelectValue placeholder="Kein Schritt" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="kein-schritt">Kein Schritt</SelectItem>
+                            {steps.map((schritt, stepIndex) => (
+                              <SelectItem
+                                key={`${schritt.key}-ingredient-option`}
+                                value={String(stepIndex)}
+                              >
+                                P{schritt.position || stepIndex + 1} {schritt.name || "Schritt"}
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
                       </div>
-                      <div className="grid gap-1.5">
+                      <div className="grid gap-2">
                         <Label htmlFor={`ingredient-alpha-${index}`}>Alpha-Säure (%)</Label>
                         <Input
                           id={`ingredient-alpha-${index}`}
@@ -600,7 +613,7 @@ export function RecipeWizard({
                           }
                         />
                       </div>
-                      <div className="grid gap-1.5">
+                      <div className="grid gap-2">
                         <Label htmlFor={`ingredient-ebc-${index}`}>EBC</Label>
                         <Input
                           id={`ingredient-ebc-${index}`}
@@ -617,7 +630,7 @@ export function RecipeWizard({
                           }
                         />
                       </div>
-                      <div className="grid gap-1.5">
+                      <div className="grid gap-2">
                         <Label htmlFor={`ingredient-zugabe-${index}`}>
                           Zugabe nach Schrittstart (Min.)
                         </Label>
@@ -636,7 +649,7 @@ export function RecipeWizard({
                           }
                         />
                       </div>
-                      <div className="grid gap-1.5 sm:col-span-2">
+                      <div className="grid gap-2 sm:col-span-2">
                         <Label htmlFor={`ingredient-notizen-${index}`}>Notizen</Label>
                         <textarea
                           id={`ingredient-notizen-${index}`}
@@ -750,12 +763,12 @@ export function RecipeWizard({
 
             {activeStep === 4 ? (
               <div className="space-y-4 text-sm">
-                <div className="rounded-lg border p-3">
+                <div className="rounded-lg border p-4">
                   <p className="font-medium">{name || "Ohne Namen"}</p>
                   <p className="text-muted-foreground">{beschreibung || "Keine Beschreibung"}</p>
                 </div>
-                <div className="grid gap-3 sm:grid-cols-2">
-                  <div className="rounded-lg border p-3">
+                <div className="grid gap-4 sm:grid-cols-2">
+                  <div className="rounded-lg border p-4">
                     <p className="font-medium">{steps.length} Schritte</p>
                     <ul className="mt-1 list-inside list-disc text-muted-foreground">
                       {steps.map((schritt) => (
@@ -765,7 +778,7 @@ export function RecipeWizard({
                       ))}
                     </ul>
                   </div>
-                  <div className="rounded-lg border p-3">
+                  <div className="rounded-lg border p-4">
                     <p className="font-medium">{ingredients.length} Zutaten</p>
                     <ul className="mt-1 list-inside list-disc text-muted-foreground">
                       {ingredients.map((zutat) => {

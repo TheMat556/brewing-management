@@ -162,7 +162,7 @@ export function DemoDialogShell({
         aria-modal="true"
         aria-labelledby={titleId}
         className={cn(
-          "relative z-10 max-h-[90vh] w-full overflow-y-auto rounded-xl border bg-background p-5 shadow-2xl sm:p-6",
+          "relative z-10 max-h-[90vh] w-full overflow-y-auto rounded-xl border bg-background p-4 shadow-2xl sm:p-6",
           wide ? "max-w-3xl" : "max-w-lg",
         )}
       >
@@ -184,7 +184,7 @@ export function DemoDialogShell({
             <X />
           </Button>
         </div>
-        <div className="mt-5">{children}</div>
+        <div className="mt-6">{children}</div>
       </div>
     </div>,
     document.body,
@@ -259,7 +259,7 @@ export function DemoActionButton({
               </div>
             </div>
             {fields.length > 0 ? (
-              <dl className="grid gap-2 rounded-lg border p-3 text-sm">
+              <dl className="grid gap-2 rounded-lg border p-4 text-sm">
                 {fields.map((field) => {
                   const raw = values[field.name] ?? "";
                   const display =
