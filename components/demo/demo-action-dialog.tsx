@@ -116,18 +116,20 @@ function FieldControl({
   );
 }
 
-function DialogShell({
+export function DemoDialogShell({
   open,
   title,
   description,
   onClose,
   children,
+  wide = false,
 }: {
   open: boolean;
   title: string;
   description: string;
   onClose: () => void;
   children: ReactNode;
+  wide?: boolean;
 }) {
   const titleId = useId();
 
@@ -159,7 +161,10 @@ function DialogShell({
         role="dialog"
         aria-modal="true"
         aria-labelledby={titleId}
-        className="relative z-10 max-h-[90vh] w-full max-w-lg overflow-y-auto rounded-xl border bg-background p-5 shadow-2xl sm:p-6"
+        className={cn(
+          "relative z-10 max-h-[90vh] w-full overflow-y-auto rounded-xl border bg-background p-5 shadow-2xl sm:p-6",
+          wide ? "max-w-3xl" : "max-w-lg",
+        )}
       >
         <div className="flex items-start justify-between gap-4">
           <div className="min-w-0">
@@ -241,7 +246,7 @@ export function DemoActionButton({
         {icon}
         {label}
       </Button>
-      <DialogShell open={open} title={title} description={description} onClose={closeDialog}>
+      <DemoDialogShell open={open} title={title} description={description} onClose={closeDialog}>
         {submitted ? (
           <div className="space-y-4">
             <div className="flex items-start gap-3 rounded-lg border border-emerald-200 bg-emerald-50 p-3 text-emerald-800 dark:border-emerald-900 dark:bg-emerald-950 dark:text-emerald-200">
@@ -311,7 +316,7 @@ export function DemoActionButton({
             </div>
           </form>
         )}
-      </DialogShell>
+      </DemoDialogShell>
     </>
   );
 }

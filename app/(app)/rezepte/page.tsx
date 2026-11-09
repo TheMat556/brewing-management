@@ -1,88 +1,82 @@
-import { BookOpen, FilePlus2, FlaskConical, LockKeyhole } from "lucide-react";
+"use client";
+
+import { BookOpen, FlaskConical, LockKeyhole } from "lucide-react";
 import Link from "next/link";
+import { useState } from "react";
 
 import { PageHeader } from "@/components/brewing/page-header";
 import { StatCard } from "@/components/brewing/stat-card";
 import { ArchivBadge, RezeptStatusBadge } from "@/components/brewing/status-badge";
-import { DemoActionButton } from "@/components/demo/demo-action-dialog";
+import { RecipeWizard } from "@/components/demo/recipe-wizard";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { getAktuelleVersion, getVersionenFuerRezept, rezepte, rezeptversionen } from "@/lib/demo";
+import type { Rezept, Rezeptversion } from "@/lib/demo";
+import { rezepte, rezeptversionen, rohstoffe } from "@/lib/demo";
 import { formatLiters, formatPercent, formatPlato } from "@/lib/format";
 
+function sortVersions(versions: Rezeptversion[]): Rezeptversion[] {
+  return [...versions].sort((a, b) => b.versionsnummer - a.versionsnummer);
+}
+
 export default function RezeptePage() {
-  const freigegeben = rezeptversionen.filter((version) => version.status === "FREIGEGEBEN");
-  const entwuerfe = rezeptversionen.filter((version) => version.status === "ENTWURF");
-  const archiviert = rezepte.filter((rezept) => rezept.archiviert);
+  const [recipes, setRecipes] = useState<Rezept[]>(rezepte);
+  const [versions, setVersions] = useState<Rezeptversion[]>(rezeptversionen);
+
+  const freigegeben = versions.filter((version) => version.status === "FREIGEGEBEN");
+  const entwuerfe = versions.filter((version) => version.status === "ENTWURF");
+  const archiviert = recipes.filter((rezept) => rezept.archiviert);
+
+  function handleCreated(recipe: Rezept, version: Rezeptversion) {
+    setRecipes((current) => [recipe, ...current]);
+    setVersions((current) => [version, ...current]);
+  }
 
   return (
     <div className="space-y-6">
       <PageHeader
         title="Rezepte"
         description="Rezepte sind versioniert. Freigegebene Versionen sind unveränderlich; Änderungen entstehen als neue Entwurfsversion."
-        actions={
-          <DemoActionButton
-            label="Neues Rezept"
-            title="Neues Rezept"
-            description="Rezeptstammdaten erfassen; die erste Version wird gemeinsam angelegt. Zielwerte und Zutaten werden anschließend im Entwurf gepflegt."
-            submitLabel="Rezept vorbereiten"
-            icon={<FilePlus2 />}
-            successMessage="Demo-Rezept vorbereitet."
-            fields={[
-              {
-                kind: "text",
-                name: "name",
-                label: "Rezeptname",
-                placeholder: "z. B. Sommer-Pils",
-                required: true,
-              },
-              {
-                kind: "text",
-                name: "beschreibung",
-                label: "Kurzbeschreibung",
-                placeholder: "Optional",
-              },
-              {
-                kind: "textarea",
-                name: "infos",
-                label: "Interne Informationen",
-                placeholder: "Optional",
-              },
-            ]}
-          />
-        }
+        actions={<RecipeWizard rohstoffe={rohstoffe} onCreated={handleCreated} />}
       />
 
       <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
-        <StatCard title="Rezepte" value={rezepte.length} icon={BookOpen} />
+        <StatCard title="Rezepte" value={recipes.length} icon={BookOpen} />
         <StatCard title="Freigegebene Versionen" value={freigegeben.length} icon={LockKeyhole} />
         <StatCard title="Entwürfe" value={entwuerfe.length} icon={FlaskConical} />
         <StatCard title="Archiviert" value={archiviert.length} />
       </div>
 
       <div className="grid gap-4 lg:grid-cols-2 2xl:grid-cols-3">
-        {rezepte.map((rezept) => {
-          const versionen = getVersionenFuerRezept(rezept.id);
-          const aktuelleVersion = getAktuelleVersion(rezept.id);
+        {recipes.map((rezept) => {
+          const rezeptVersionen = sortVersions(
+            versions.filter((version) => version.rezept_id === rezept.id),
+          );
+          const aktuelleVersion = rezeptVersionen[0];
+          const isLocalDemo = rezept.id < 0;
           return (
             <Card key={rezept.id} className={rezept.archiviert ? "opacity-80" : undefined}>
               <CardHeader>
                 <div className="flex flex-wrap items-start justify-between gap-3">
                   <div>
                     <CardTitle>
-                      <Link href={`/rezepte/${rezept.id}`} className="hover:underline">
-                        {rezept.name}
-                      </Link>
+                      {isLocalDemo ? (
+                        rezept.name
+                      ) : (
+                        <Link href={`/rezepte/${rezept.id}`} className="hover:underline">
+                          {rezept.name}
+                        </Link>
+                      )}
                     </CardTitle>
                     <CardDescription className="mt-1">
-                      {versionen.length} Version{versionen.length === 1 ? "" : "en"}
+                      {rezeptVersionen.length} Version{rezeptVersionen.length === 1 ? "" : "en"}
                       {aktuelleVersion ? ` · neueste v${aktuelleVersion.versionsnummer}` : ""}
                     </CardDescription>
                   </div>
                   <div className="flex flex-col items-end gap-2">
                     {aktuelleVersion ? <RezeptStatusBadge status={aktuelleVersion.status} /> : null}
                     {rezept.archiviert ? <ArchivBadge /> : null}
+                    {isLocalDemo ? <Badge variant="outline">Demo</Badge> : null}
                   </div>
                 </div>
               </CardHeader>
@@ -105,9 +99,15 @@ export default function RezeptePage() {
                     <Badge variant="outline">{aktuelleVersion.ziel_ebc ?? "—"} EBC</Badge>
                   </div>
                 ) : null}
-                <Button variant="outline" className="w-full" asChild>
-                  <Link href={`/rezepte/${rezept.id}`}>Rezept öffnen</Link>
-                </Button>
+                {isLocalDemo ? (
+                  <Button variant="outline" className="w-full" disabled>
+                    Lokales Demo-Rezept
+                  </Button>
+                ) : (
+                  <Button variant="outline" className="w-full" asChild>
+                    <Link href={`/rezepte/${rezept.id}`}>Rezept öffnen</Link>
+                  </Button>
+                )}
               </CardContent>
             </Card>
           );
