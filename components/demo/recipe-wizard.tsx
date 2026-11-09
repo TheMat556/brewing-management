@@ -17,7 +17,7 @@ import {
 import type { Rezept, Rezeptversion, Rohstoff } from "@/lib/demo";
 import { basiseinheitLabels, prozessschrittTypLabels } from "@/lib/labels";
 
-const stepTitles = ["Stammdaten", "Schritte", "Zutaten", "Zielwerte", "Prüfen"] as const;
+const stepTitles = ["Stammdaten", "Zutaten", "Schritte", "Zielwerte", "Prüfen"] as const;
 
 type WizardStep = {
   key: string;
@@ -152,16 +152,6 @@ export function RecipeWizard({
       return "Der Rezeptname ist erforderlich.";
     }
     if (stepIndex === 1) {
-      if (steps.length === 0) {
-        return "Mindestens ein Prozessschritt ist erforderlich.";
-      }
-      for (const [index, schritt] of steps.entries()) {
-        if (!schritt.name.trim()) {
-          return `Schritt ${index + 1}: Name ist erforderlich.`;
-        }
-      }
-    }
-    if (stepIndex === 2) {
       if (ingredients.length === 0) {
         return "Mindestens eine Zutat ist erforderlich.";
       }
@@ -171,6 +161,16 @@ export function RecipeWizard({
         }
         if (!zutat.menge.trim() || Number(zutat.menge) < 0) {
           return `Zutat ${index + 1}: gültige Menge eingeben.`;
+        }
+      }
+    }
+    if (stepIndex === 2) {
+      if (steps.length === 0) {
+        return "Mindestens ein Prozessschritt ist erforderlich.";
+      }
+      for (const [index, schritt] of steps.entries()) {
+        if (!schritt.name.trim()) {
+          return `Schritt ${index + 1}: Name ist erforderlich.`;
         }
       }
     }
@@ -276,17 +276,24 @@ export function RecipeWizard({
           <div className="space-y-6">
             <ol className="mb-8 flex flex-wrap gap-2 text-xs">
               {stepTitles.map((title, index) => (
-                <li
-                  key={title}
-                  className={
-                    index === activeStep
-                      ? "rounded-full bg-primary px-3 py-1 font-medium text-primary-foreground"
-                      : index < activeStep
-                        ? "rounded-full bg-emerald-100 px-3 py-1 text-emerald-800 dark:bg-emerald-950 dark:text-emerald-200"
-                        : "rounded-full bg-muted px-3 py-1 text-muted-foreground"
-                  }
-                >
-                  {index + 1}. {title}
+                <li key={title}>
+                  <button
+                    type="button"
+                    aria-current={index === activeStep ? "step" : undefined}
+                    onClick={() => {
+                      setError(null);
+                      setActiveStep(index);
+                    }}
+                    className={
+                      index === activeStep
+                        ? "cursor-pointer rounded-full bg-primary px-3 py-1 font-medium text-primary-foreground"
+                        : index < activeStep
+                          ? "cursor-pointer rounded-full bg-emerald-100 px-3 py-1 text-emerald-800 transition-colors hover:bg-emerald-200 dark:bg-emerald-950 dark:text-emerald-200 dark:hover:bg-emerald-900"
+                          : "cursor-pointer rounded-full bg-muted px-3 py-1 text-muted-foreground transition-colors hover:bg-muted/70"
+                    }
+                  >
+                    {index + 1}. {title}
+                  </button>
                 </li>
               ))}
             </ol>
@@ -325,158 +332,6 @@ export function RecipeWizard({
             ) : null}
 
             {activeStep === 1 ? (
-              <div className="space-y-3">
-                {steps.map((schritt, index) => (
-                  <div key={schritt.key} className="rounded-lg border p-4">
-                    <div className="mb-3 flex items-center justify-between gap-2">
-                      <p className="text-sm font-medium">Schritt {index + 1}</p>
-                      <Button
-                        type="button"
-                        variant="ghost"
-                        size="sm"
-                        onClick={() => setSteps((current) => current.filter((_, i) => i !== index))}
-                        disabled={steps.length === 1}
-                      >
-                        <Trash2 />
-                        Entfernen
-                      </Button>
-                    </div>
-                    <div className="grid gap-4 sm:grid-cols-2">
-                      <div className="grid gap-2">
-                        <Label htmlFor={`step-position-${index}`}>Position</Label>
-                        <Input
-                          id={`step-position-${index}`}
-                          type="number"
-                          min={1}
-                          value={schritt.position}
-                          onChange={(event) =>
-                            setSteps((current) =>
-                              current.map((item, i) =>
-                                i === index ? { ...item, position: event.target.value } : item,
-                              ),
-                            )
-                          }
-                        />
-                      </div>
-                      <div className="grid gap-2">
-                        <Label htmlFor={`step-typ-${index}`}>Typ</Label>
-                        <Select
-                          value={schritt.typ}
-                          onValueChange={(value) =>
-                            setSteps((current) =>
-                              current.map((item, i) =>
-                                i === index ? { ...item, typ: value as WizardStep["typ"] } : item,
-                              ),
-                            )
-                          }
-                        >
-                          <SelectTrigger id={`step-typ-${index}`} className="w-full">
-                            <SelectValue placeholder="Typ wählen" />
-                          </SelectTrigger>
-                          <SelectContent>
-                            {Object.entries(prozessschrittTypLabels).map(([value, label]) => (
-                              <SelectItem key={value} value={value}>
-                                {label}
-                              </SelectItem>
-                            ))}
-                          </SelectContent>
-                        </Select>
-                      </div>
-                      <div className="grid gap-2 sm:col-span-2">
-                        <Label htmlFor={`step-name-${index}`}>Name</Label>
-                        <Input
-                          id={`step-name-${index}`}
-                          value={schritt.name}
-                          onChange={(event) =>
-                            setSteps((current) =>
-                              current.map((item, i) =>
-                                i === index ? { ...item, name: event.target.value } : item,
-                              ),
-                            )
-                          }
-                          placeholder="z. B. Läuterrast"
-                        />
-                      </div>
-                      <div className="grid gap-2">
-                        <Label htmlFor={`step-temperatur-${index}`}>Temperatur (°C)</Label>
-                        <Input
-                          id={`step-temperatur-${index}`}
-                          type="number"
-                          step="0.1"
-                          value={schritt.temperatur}
-                          onChange={(event) =>
-                            setSteps((current) =>
-                              current.map((item, i) =>
-                                i === index ? { ...item, temperatur: event.target.value } : item,
-                              ),
-                            )
-                          }
-                        />
-                      </div>
-                      <div className="grid gap-2">
-                        <Label htmlFor={`step-dauer-${index}`}>Dauer (Min.)</Label>
-                        <Input
-                          id={`step-dauer-${index}`}
-                          type="number"
-                          min={0}
-                          step="0.1"
-                          value={schritt.dauer}
-                          onChange={(event) =>
-                            setSteps((current) =>
-                              current.map((item, i) =>
-                                i === index ? { ...item, dauer: event.target.value } : item,
-                              ),
-                            )
-                          }
-                        />
-                      </div>
-                      <div className="grid gap-2">
-                        <Label htmlFor={`step-wasser-${index}`}>Wassermenge (L)</Label>
-                        <Input
-                          id={`step-wasser-${index}`}
-                          type="number"
-                          min={0}
-                          step="0.1"
-                          value={schritt.wasser}
-                          onChange={(event) =>
-                            setSteps((current) =>
-                              current.map((item, i) =>
-                                i === index ? { ...item, wasser: event.target.value } : item,
-                              ),
-                            )
-                          }
-                        />
-                      </div>
-                      <div className="grid gap-2 sm:col-span-2">
-                        <Label htmlFor={`step-anweisung-${index}`}>Anweisung</Label>
-                        <textarea
-                          id={`step-anweisung-${index}`}
-                          className={textareaClass}
-                          value={schritt.anweisung}
-                          onChange={(event) =>
-                            setSteps((current) =>
-                              current.map((item, i) =>
-                                i === index ? { ...item, anweisung: event.target.value } : item,
-                              ),
-                            )
-                          }
-                        />
-                      </div>
-                    </div>
-                  </div>
-                ))}
-                <Button
-                  type="button"
-                  variant="outline"
-                  onClick={() => setSteps((current) => [...current, emptyStep(current.length + 1)])}
-                >
-                  <Plus />
-                  Schritt hinzufügen
-                </Button>
-              </div>
-            ) : null}
-
-            {activeStep === 2 ? (
               <div className="space-y-3">
                 {ingredients.map((zutat, index) => (
                   <div key={zutat.key} className="rounded-lg border p-4">
@@ -678,6 +533,158 @@ export function RecipeWizard({
               </div>
             ) : null}
 
+            {activeStep === 2 ? (
+              <div className="space-y-3">
+                {steps.map((schritt, index) => (
+                  <div key={schritt.key} className="rounded-lg border p-4">
+                    <div className="mb-3 flex items-center justify-between gap-2">
+                      <p className="text-sm font-medium">Schritt {index + 1}</p>
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => setSteps((current) => current.filter((_, i) => i !== index))}
+                        disabled={steps.length === 1}
+                      >
+                        <Trash2 />
+                        Entfernen
+                      </Button>
+                    </div>
+                    <div className="grid gap-4 sm:grid-cols-2">
+                      <div className="grid gap-2">
+                        <Label htmlFor={`step-position-${index}`}>Position</Label>
+                        <Input
+                          id={`step-position-${index}`}
+                          type="number"
+                          min={1}
+                          value={schritt.position}
+                          onChange={(event) =>
+                            setSteps((current) =>
+                              current.map((item, i) =>
+                                i === index ? { ...item, position: event.target.value } : item,
+                              ),
+                            )
+                          }
+                        />
+                      </div>
+                      <div className="grid gap-2">
+                        <Label htmlFor={`step-typ-${index}`}>Typ</Label>
+                        <Select
+                          value={schritt.typ}
+                          onValueChange={(value) =>
+                            setSteps((current) =>
+                              current.map((item, i) =>
+                                i === index ? { ...item, typ: value as WizardStep["typ"] } : item,
+                              ),
+                            )
+                          }
+                        >
+                          <SelectTrigger id={`step-typ-${index}`} className="w-full">
+                            <SelectValue placeholder="Typ wählen" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            {Object.entries(prozessschrittTypLabels).map(([value, label]) => (
+                              <SelectItem key={value} value={value}>
+                                {label}
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                      </div>
+                      <div className="grid gap-2 sm:col-span-2">
+                        <Label htmlFor={`step-name-${index}`}>Name</Label>
+                        <Input
+                          id={`step-name-${index}`}
+                          value={schritt.name}
+                          onChange={(event) =>
+                            setSteps((current) =>
+                              current.map((item, i) =>
+                                i === index ? { ...item, name: event.target.value } : item,
+                              ),
+                            )
+                          }
+                          placeholder="z. B. Läuterrast"
+                        />
+                      </div>
+                      <div className="grid gap-2">
+                        <Label htmlFor={`step-temperatur-${index}`}>Temperatur (°C)</Label>
+                        <Input
+                          id={`step-temperatur-${index}`}
+                          type="number"
+                          step="0.1"
+                          value={schritt.temperatur}
+                          onChange={(event) =>
+                            setSteps((current) =>
+                              current.map((item, i) =>
+                                i === index ? { ...item, temperatur: event.target.value } : item,
+                              ),
+                            )
+                          }
+                        />
+                      </div>
+                      <div className="grid gap-2">
+                        <Label htmlFor={`step-dauer-${index}`}>Dauer (Min.)</Label>
+                        <Input
+                          id={`step-dauer-${index}`}
+                          type="number"
+                          min={0}
+                          step="0.1"
+                          value={schritt.dauer}
+                          onChange={(event) =>
+                            setSteps((current) =>
+                              current.map((item, i) =>
+                                i === index ? { ...item, dauer: event.target.value } : item,
+                              ),
+                            )
+                          }
+                        />
+                      </div>
+                      <div className="grid gap-2">
+                        <Label htmlFor={`step-wasser-${index}`}>Wassermenge (L)</Label>
+                        <Input
+                          id={`step-wasser-${index}`}
+                          type="number"
+                          min={0}
+                          step="0.1"
+                          value={schritt.wasser}
+                          onChange={(event) =>
+                            setSteps((current) =>
+                              current.map((item, i) =>
+                                i === index ? { ...item, wasser: event.target.value } : item,
+                              ),
+                            )
+                          }
+                        />
+                      </div>
+                      <div className="grid gap-2 sm:col-span-2">
+                        <Label htmlFor={`step-anweisung-${index}`}>Anweisung</Label>
+                        <textarea
+                          id={`step-anweisung-${index}`}
+                          className={textareaClass}
+                          value={schritt.anweisung}
+                          onChange={(event) =>
+                            setSteps((current) =>
+                              current.map((item, i) =>
+                                i === index ? { ...item, anweisung: event.target.value } : item,
+                              ),
+                            )
+                          }
+                        />
+                      </div>
+                    </div>
+                  </div>
+                ))}
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={() => setSteps((current) => [...current, emptyStep(current.length + 1)])}
+                >
+                  <Plus />
+                  Schritt hinzufügen
+                </Button>
+              </div>
+            ) : null}
+
             {activeStep === 3 ? (
               <div className="grid gap-4 sm:grid-cols-2">
                 <div className="grid gap-2">
@@ -769,16 +776,6 @@ export function RecipeWizard({
                 </div>
                 <div className="grid gap-4 sm:grid-cols-2">
                   <div className="rounded-lg border p-4">
-                    <p className="font-medium">{steps.length} Schritte</p>
-                    <ul className="mt-1 list-inside list-disc text-muted-foreground">
-                      {steps.map((schritt) => (
-                        <li key={schritt.key}>
-                          P{schritt.position} {schritt.name || "Unbenannt"}
-                        </li>
-                      ))}
-                    </ul>
-                  </div>
-                  <div className="rounded-lg border p-4">
                     <p className="font-medium">{ingredients.length} Zutaten</p>
                     <ul className="mt-1 list-inside list-disc text-muted-foreground">
                       {ingredients.map((zutat) => {
@@ -792,6 +789,16 @@ export function RecipeWizard({
                           </li>
                         );
                       })}
+                    </ul>
+                  </div>
+                  <div className="rounded-lg border p-4">
+                    <p className="font-medium">{steps.length} Schritte</p>
+                    <ul className="mt-1 list-inside list-disc text-muted-foreground">
+                      {steps.map((schritt) => (
+                        <li key={schritt.key}>
+                          P{schritt.position} {schritt.name || "Unbenannt"}
+                        </li>
+                      ))}
                     </ul>
                   </div>
                 </div>
