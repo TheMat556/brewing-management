@@ -274,7 +274,7 @@ export function RecipeWizard({
           </div>
         ) : (
           <div className="space-y-6">
-            <ol className="flex flex-wrap gap-2 text-xs">
+            <ol className="mb-8 flex flex-wrap gap-2 text-xs">
               {stepTitles.map((title, index) => (
                 <li
                   key={title}
