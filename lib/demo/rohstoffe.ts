@@ -1,0 +1,86 @@
+import type { Tables } from "@/lib/database.types";
+
+export type Rohstoff = Tables<"tb_rohstoff">;
+
+export const rohstoffe = [
+  {
+    id: 1,
+    name: "Pilsner Malz",
+    kategorie: "MALZ",
+    basiseinheit: "g",
+    archiviert: false,
+    notizen: "Basismalz für helle Biere.",
+  },
+  {
+    id: 2,
+    name: "Münchner Malz",
+    kategorie: "MALZ",
+    basiseinheit: "g",
+    archiviert: false,
+    notizen: "Bringt malzige Süße und Farbe.",
+  },
+  {
+    id: 3,
+    name: "Weizenmalz hell",
+    kategorie: "MALZ",
+    basiseinheit: "g",
+    archiviert: false,
+    notizen: null,
+  },
+  {
+    id: 4,
+    name: "Hallertauer Tradition",
+    kategorie: "HOPFEN",
+    basiseinheit: "g",
+    archiviert: false,
+    notizen: "Aromahopfen, mild und würzig.",
+  },
+  {
+    id: 5,
+    name: "Cascade",
+    kategorie: "HOPFEN",
+    basiseinheit: "g",
+    archiviert: false,
+    notizen: "Zitrus- und Grapefruitaromen.",
+  },
+  {
+    id: 6,
+    name: "SafAle US-05",
+    kategorie: "HEFE",
+    basiseinheit: "g",
+    archiviert: false,
+    notizen: "Trockenhefe für obergärige Biere.",
+  },
+  {
+    id: 7,
+    name: "SafAle WB-06",
+    kategorie: "HEFE",
+    basiseinheit: "g",
+    archiviert: false,
+    notizen: "Weizenbier-Trockenhefe.",
+  },
+  {
+    id: 8,
+    name: "Koriandersamen",
+    kategorie: "GEWUERZ",
+    basiseinheit: "g",
+    archiviert: false,
+    notizen: "Gewürz für Saison und Witbier.",
+  },
+  {
+    id: 9,
+    name: "Klärungsmittel",
+    kategorie: "SONSTIGES",
+    basiseinheit: "ml",
+    archiviert: false,
+    notizen: "Direktzugabe ohne Lagerbewegung.",
+  },
+  {
+    id: 10,
+    name: "Cascade 2023",
+    kategorie: "HOPFEN",
+    basiseinheit: "g",
+    archiviert: true,
+    notizen: "Alte Ernte, nur noch für Historie relevant.",
+  },
+] satisfies Rohstoff[];

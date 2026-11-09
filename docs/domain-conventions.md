@@ -187,6 +187,11 @@ ownership, sign, and historical-integrity rules regardless of the write path.
 
 ## Brewing-value semantics decided for this implementation
 
+- Ingredient addition offsets are stored relative to the start of the assigned step.
+- The UI may display boiling additions as `T-<minutes>` relative to the boil end by
+  subtracting the offset from the boil step duration. This is presentation only; the stored
+  value and database semantics remain step-start-relative.
+
 - `ist_abv_prozent`, `ist_ibu`, and `ist_ebc` record operator-entered actual values. No
   automatic formulas calculate or overwrite them. Calculated values must not be presented as
   laboratory measurements.
@@ -229,7 +234,7 @@ ownership, sign, and historical-integrity rules regardless of the write path.
 
 ## Remaining product decisions
 
-- Brewing-domain UI screens and workflows.
+- Wiring the read-only demo UI to Supabase queries and RPCs; write workflows are still open.
 - Hosted deployment, production Auth/SMTP verification, and backup rehearsal.
 - Any future automated brewing calculations require a separately specified algorithm and
   input contract.

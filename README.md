@@ -1,5 +1,7 @@
 # Brewing Management App
 
+[![CI](https://github.com/TheMat556/brewing-management/actions/workflows/ci.yml/badge.svg)](https://github.com/TheMat556/brewing-management/actions/workflows/ci.yml)
+
 A Next.js + Supabase application scaffolded from the official
 [`with-supabase`](https://github.com/vercel/next.js/tree/canary/examples/with-supabase)
 starter, with the brewing data foundation from `TODO.md` implemented as ordered migrations.
@@ -12,6 +14,9 @@ starter, with the brewing data foundation from `TODO.md` implemented as ordered 
 - Bun, Biome, Zod, and Vitest adopted as explicit project decisions.
 - Brewing schema, constraints, triggers, RLS, transactional RPCs, generated database types,
   and application validation implemented.
+- Read-only brewing demo UI implemented with the shadcn `sidebar-08` shell and typed local
+  fixtures for Lager, Rezepte, Sude, Geräte, and Zugang. Supabase domain queries and mutations
+  are not wired into the UI yet.
 - Domain access uses a single-owner allowlist; authenticated users are not authorized until
   listed.
 - The hosted Supabase project, production environment variables, and production Auth
@@ -22,6 +27,25 @@ See [`docs/setup-decisions.md`](docs/setup-decisions.md) for the dependency revi
 baseline results, and verification evidence.
 See [`docs/domain-conventions.md`](docs/domain-conventions.md) for the implemented database
 conventions, access policy, RPC boundaries, and constraints.
+
+## Demo UI
+
+The current UI is a read-only demo backed by typed fixtures in `lib/demo/`. It intentionally
+does not call Supabase yet and does not perform brewing calculations.
+
+| Route            | Content                                                                                 |
+| ---------------- | --------------------------------------------------------------------------------------- |
+| `/dashboard`     | Overview cards, recent movements, active batches, MHD warnings                          |
+| `/lager`         | Lots with derived stock; `/lager/bewegungen`, `/lager/rohstoffe`, `/lager/chargen/[id]` |
+| `/rezepte`       | Recipe list and versioned detail with ingredients and steps                             |
+| `/sude`          | Batch list and detail tabs for values, steps, ingredients, equipment, movements         |
+| `/geraete`       | Equipment groups and assignment history                                                 |
+| `/einstellungen` | Demo account, app status, and `/einstellungen/zugang` allowlist                         |
+
+Demo actions such as creating, releasing, deleting, and booking stock are disabled on purpose.
+Recipe and batch detail views include a dedicated **Würzekochen** schedule with hop/adjunct
+additions shown as T-minus times relative to the end of the boil. The first real-data milestone
+is replacing the fixture selectors with Supabase queries and RPC calls.
 
 ## Stack
 
@@ -108,6 +132,18 @@ NEXT_PUBLIC_BASE_PATH=/absproxy/3000
 Then open `https://<your-code-server-host>/absproxy/3000/`. The base path is applied only
 during development; production builds ignore `NEXT_PUBLIC_BASE_PATH`. For normal localhost
 development, leave it blank and use `http://localhost:3000/`.
+
+If the browser also needs to reach local Supabase through code-server, use the
+prefix-stripping `/proxy/54321` route for the browser and keep Node-side auth on the local
+API:
+
+```dotenv
+NEXT_PUBLIC_SUPABASE_URL=https://<your-code-server-host>/proxy/54321
+SUPABASE_INTERNAL_URL=http://127.0.0.1:54321
+```
+
+`/proxy/54321` is correct for Supabase because the API expects `/auth/v1` and `/rest/v1` at
+the root. `/absproxy/54321` would preserve the prefix and return 404s.
 
 Do not run `next build` while `next dev` is running. Both write to `.next`, and the build
 invalidates the dev server's asset hashes, producing 404s until the dev server is restarted
@@ -279,16 +315,48 @@ bun run test:integration
 bun run build
 ```
 
-Current coverage: unit tests for the starter helper and Zod domain validation, plus 27
-PostgreSQL integration tests covering RLS, recipe/version lifecycle, copy semantics,
-substitution, inventory movements, corrections, idempotency, concurrency, equipment
+Current coverage: unit tests for the starter helper, Zod domain validation, and demo fixture
+integrity, plus 27 PostgreSQL integration tests covering RLS, recipe/version lifecycle, copy
+semantics, substitution, inventory movements, corrections, idempotency, concurrency, equipment
 snapshots, archiving, and destructive-delete protection.
+
+## CI/CD
+
+GitHub Actions workflows live in `.github/workflows/`:
+
+- `ci.yml` runs on pushes to `main` and on pull requests:
+  - Biome lint, format, and import checks
+  - TypeScript
+  - Unit tests
+  - Production build
+  - PostgreSQL integration tests against a local Supabase stack
+- `deploy-vercel.yml` deploys Vercel:
+  - feature branches matching `feat/**` create **preview** deployments on push
+  - after a successful `CI` workflow on `main`, a **production** deployment runs
+  - `workflow_dispatch` can target preview or production manually once the workflow
+    exists on the default branch
+
+Required repository secrets for deployment:
+
+| Secret              | Purpose                     |
+| ------------------- | --------------------------- |
+| `VERCEL_TOKEN`      | Vercel CLI authentication   |
+| `VERCEL_ORG_ID`     | Vercel organization/team ID |
+| `VERCEL_PROJECT_ID` | Vercel project ID           |
+
+Configure the production Supabase URL and key in the Vercel project environment. Do not set
+`SUPABASE_INTERNAL_URL` on Vercel; it is only for code-server development.
+
+CodeRabbit is configured in `.coderabbit.yaml`. The configuration only takes effect after
+installing the CodeRabbit GitHub App for this repository.
 
 ## Project structure
 
 ```text
-app/                  Starter pages and auth routes
-components/           Starter UI and auth components
+.github/               CI, Vercel deployment, and CodeRabbit configuration
+app/                  App routes; brewing UI lives in app/(app)/ with auth outside it
+components/           UI primitives, app sidebar/navigation, auth, and brewing components
+lib/demo/             Typed demo fixtures and selectors; replaced when Supabase is wired
 lib/supabase/         Browser, server, and proxy clients with generated Database types
 lib/database.types.ts Generated Supabase types
 lib/domain/           Zod validation and local PostgreSQL acceptance tests
